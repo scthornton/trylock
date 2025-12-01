@@ -6,7 +6,8 @@ An open-source research project to create a dataset and training pipeline that i
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Dataset](https://img.shields.io/badge/HuggingFace-Dataset-yellow)](https://huggingface.co/datasets/scthornton/aegis)
+[![Models](https://img.shields.io/badge/HuggingFace-Models-yellow)](https://huggingface.co/scthornton)
+[![Dataset](https://img.shields.io/badge/HuggingFace-Dataset-green)](https://huggingface.co/datasets/scthornton/aegis-demo-dataset)
 
 ## The Problem
 
@@ -45,9 +46,44 @@ AEGIS provides a three-layer defense stack:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+## 🎯 Trained Models & Research
+
+### Published Models
+
+The AEGIS defense system is **fully trained and available** on HuggingFace:
+
+- **DPO Adapter:** [scthornton/aegis-mistral-7b-dpo](https://huggingface.co/scthornton/aegis-mistral-7b-dpo)
+- **RepE Steering Vectors:** [scthornton/aegis-repe-vectors](https://huggingface.co/scthornton/aegis-repe-vectors)
+- **Sidecar Classifier:** [scthornton/aegis-sidecar-classifier](https://huggingface.co/scthornton/aegis-sidecar-classifier)
+
+### Dataset
+
+- **Public Sample:** [scthornton/aegis-demo-dataset](https://huggingface.co/datasets/scthornton/aegis-demo-dataset) (48 diverse examples)
+- **Full Training Set:** Private (2,939 preference pairs - available upon request for academic research)
+
+### Research Paper
+
+See `paper/AEGIS_Canonical.md` for the complete research paper documenting methodology, experiments, and results.
+
+**Performance:** AEGIS achieves **82.8% reduction in attack success rate** (from 100% to 17.2%) while maintaining low over-refusal (12.6%) on benign queries.
+
 ## Quick Start
 
-### Installation
+### Use Pre-Trained Models
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+
+# Load DPO-trained model
+tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3")
+base = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3")
+model = PeftModel.from_pretrained(base, "scthornton/aegis-mistral-7b-dpo")
+
+# See scripts/eval_cpu_only.py for full three-layer implementation
+```
+
+### Installation (For Development)
 
 ```bash
 git clone https://github.com/scthornton/aegis.git

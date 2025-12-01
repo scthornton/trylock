@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+outputs/
+generation_output.log
+
+# Private Training Data (DO NOT COMMIT)
+data/dpo/aegis_dpo_full.jsonl
+data/dpo/train.jsonl
+data/dpo/val.jsonl
+data/dpo/test.jsonl
+data/sidecar/train.jsonl
+data/sidecar/val.jsonl
+data/sidecar/test.jsonl
+data/tier1_open/
+data/tier2_adversarial/
+data/tier3_proprietary/
+
+# BUT allow public sample
+!data/public_sample/
+!data/public_sample/*
+
+# Model checkpoints (too large for GitHub)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+models/
+
+# Evaluation results
+eval_*.json
+results_*.json
+*.jsonl.gz
+
+# Temporary files
+tmp/
+temp/
+.cache/
+*.tmp
+
+# HuggingFace cache
+.huggingface/
+
+# Experiment outputs
+wandb/
+mlruns/

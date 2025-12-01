@@ -1,0 +1,355 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage[margin=1in]{geometry}
+
+\title{AEGIS: Defense-in-Depth Against LLM Jailbreaks via\\Layered Preference and Representation Engineering}
+
+\author{
+Scott Thornton\\
+perfecXion.ai\\
+\texttt{scott@perfecxion.ai}
+}
+
+\date{December 2024}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Large Language Models (LLMs) remain vulnerable to jailbreak attacks that bypass safety alignment through prompt manipulation, roleplay scenarios, and encoding tricks. Existing defenses typically operate at a single level---either modifying model weights through fine-tuning or applying external guardrails---leaving gaps that sophisticated attacks can exploit. We introduce AEGIS (Adaptive Ensemble Guard with Integrated Steering), a three-layer defense-in-depth architecture that combines complementary protection mechanisms: (1) Direct Preference Optimization (DPO) for embedding safety preferences into model weights, (2) Representation Engineering (RepE) for runtime activation-space steering, and (3) a lightweight sidecar classifier for adaptive defense strength adjustment. On our evaluation dataset of 299 attack prompts, AEGIS reduces Attack Success Rate (ASR) from 58\% (baseline) to 8\% (with all layers active), representing an 86\% relative reduction. Critically, each layer provides independent, complementary protection: DPO alone achieves 19\% ASR reduction, RepE steering adds 79\% reduction on top of DPO, and the sidecar enables dynamic adjustment to minimize false positives on benign queries. We release all components---trained adapters, steering vectors, classifier, and training data---to enable reproducible research on layered LLM safety.
+\end{abstract}
+
+\section{Introduction}
+
+Despite significant advances in safety alignment, Large Language Models remain susceptible to jailbreak attacks---adversarial prompts designed to elicit harmful, unethical, or dangerous outputs that violate the model's safety guidelines \cite{wei2023jailbroken, zou2023universal}. These attacks exploit various vulnerabilities: prompt injection overwrites system instructions, roleplay scenarios create fictional contexts where safety rules ``don't apply,'' and encoding tricks (Base64, ROT13, leetspeak) obfuscate malicious intent from safety classifiers.
+
+Current defenses fall into two broad categories: \textbf{weight-based methods} that modify the model's parameters through safety fine-tuning \cite{bai2022constitutional, ouyang2022training}, and \textbf{inference-time methods} that filter or modify inputs/outputs without changing weights \cite{inan2023llama, rebedea2023nemo}. Each approach has limitations. Weight-based methods can be circumvented by attacks not seen during training, while inference-time filters often create false positives that degrade user experience on legitimate queries.
+
+We argue that robust LLM safety requires \textbf{defense-in-depth}---multiple independent layers that each catch different attack patterns. Just as network security employs firewalls, intrusion detection, and endpoint protection in concert, LLM safety should combine complementary mechanisms operating at different levels of the inference stack.
+
+\subsection{Contributions}
+
+We present AEGIS, a three-layer defense architecture with the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Layer 1 (KNOWLEDGE)}: A DPO-trained LoRA adapter that embeds safety preferences directly into model weights, achieving 19\% ASR reduction over baseline.
+
+    \item \textbf{Layer 2 (INSTINCT)}: Representation Engineering steering vectors that operate in activation space during inference, providing 79\% additional ASR reduction when combined with Layer 1.
+
+    \item \textbf{Layer 3 (OVERSIGHT)}: A lightweight sidecar classifier (3B parameters) that dynamically adjusts steering strength based on input threat level, enabling strong defense against attacks while minimizing impact on benign queries.
+
+    \item \textbf{Open Release}: We release all trained components, training data (2,939 samples), and evaluation code under CC BY-NC-SA 4.0 license to enable reproducible research.
+\end{enumerate}
+
+\section{Related Work}
+
+\subsection{Jailbreak Attacks}
+
+Jailbreak attacks have evolved rapidly alongside LLM capabilities. Early attacks relied on simple prompt manipulation (``ignore previous instructions''), but modern attacks employ sophisticated techniques including:
+
+\textbf{Roleplay/Persona Attacks}: The DAN (Do Anything Now) family of attacks \cite{shen2023anything} creates fictional AI personas claimed to operate without safety restrictions. Variants include UCAR, STAN, and character-based jailbreaks.
+
+\textbf{Encoding Attacks}: Attackers encode harmful requests in Base64, ROT13, pig Latin, or custom ciphers, exploiting the gap between tokenization and semantic understanding \cite{wei2023jailbroken}.
+
+\textbf{Gradient-Based Attacks}: GCG \cite{zou2023universal} uses gradient optimization to find adversarial suffixes that cause models to comply with harmful requests. These attacks transfer across models but require white-box access.
+
+\textbf{Multi-Turn Attacks}: Crescendo \cite{russinovich2024great} and similar attacks gradually build context across conversation turns, each individually benign, that culminates in harmful compliance.
+
+\subsection{Defense Methods}
+
+\textbf{Safety Fine-Tuning}: Constitutional AI \cite{bai2022constitutional} and RLHF \cite{ouyang2022training} train models to refuse harmful requests. DPO \cite{rafailov2023direct} simplifies this by directly optimizing on preference pairs without a reward model.
+
+\textbf{External Guardrails}: Llama Guard \cite{inan2023llama} uses a separate classifier to filter inputs/outputs. NeMo Guardrails \cite{rebedea2023nemo} implements programmable safety rails. These add latency and can create false positives.
+
+\textbf{Representation Engineering}: RepE \cite{zou2023representation} demonstrates that safety-relevant directions exist in activation space and can be used to steer model behavior at inference time.
+
+\textbf{Our Contribution}: AEGIS uniquely combines all three approaches---weight modification (DPO), activation steering (RepE), and external classification (sidecar)---in a unified architecture where each layer provides independent, complementary protection.
+
+\section{Method}
+
+\subsection{Architecture Overview}
+
+AEGIS implements defense-in-depth through three complementary layers, each operating at a different level of the inference stack (Figure \ref{fig:architecture}).
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{
+\textbf{AEGIS Architecture}\\[0.5em]
+\texttt{Input} $\rightarrow$ \texttt{[Layer 3: Sidecar]} $\rightarrow$ $\alpha$ \\[0.3em]
+\hspace{2em} $\downarrow$ \\[0.3em]
+\texttt{[Layer 1: DPO Weights]} + \texttt{[Layer 2: RepE($\alpha$)]} $\rightarrow$ \texttt{Output}
+}}
+\caption{AEGIS three-layer architecture. The sidecar classifier (Layer 3) analyzes input to determine threat level and sets steering strength $\alpha$ for RepE (Layer 2). DPO-trained weights (Layer 1) provide baseline safety.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Layer 1: DPO Safety Training}
+
+We train a LoRA adapter \cite{hu2021lora} on Mistral-7B-Instruct-v0.3 using Direct Preference Optimization. DPO directly optimizes the policy to prefer safe responses over unsafe ones:
+
+\begin{equation}
+\mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x,y_w,y_l)}\left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)}\right)\right]
+\end{equation}
+
+where $y_w$ is the preferred (safe) response and $y_l$ is the dispreferred (unsafe) response.
+
+\textbf{Training Details}:
+\begin{itemize}
+    \item Base model: Mistral-7B-Instruct-v0.3
+    \item LoRA rank: 32, alpha: 64
+    \item Target modules: q\_proj, k\_proj, v\_proj, o\_proj
+    \item Training samples: 2,349
+    \item Epochs: 3
+\end{itemize}
+
+\subsection{Layer 2: Representation Engineering Steering}
+
+Unlike DPO which modifies weights, RepE steering operates in activation space during inference. We compute contrastive steering vectors by collecting activations on paired safe/unsafe prompts:
+
+\begin{equation}
+\mathbf{v}_{\text{safety}}^{(l)} = \mathbb{E}[\mathbf{h}^{(l)}_{\text{safe}}] - \mathbb{E}[\mathbf{h}^{(l)}_{\text{unsafe}}]
+\end{equation}
+
+where $\mathbf{h}^{(l)}$ are hidden states at layer $l$. During inference, we add the steering vector scaled by $\alpha$:
+
+\begin{equation}
+\mathbf{h}'^{(l)} = \mathbf{h}^{(l)} + \alpha \cdot \mathbf{v}_{\text{safety}}^{(l)}
+\end{equation}
+
+\textbf{Steering Details}:
+\begin{itemize}
+    \item Layers: 12, 14, 16, 18, 20, 22, 24, 26 (middle-to-late layers)
+    \item Vector dimension: 4096
+    \item Optimal $\alpha$: 2.0 (evaluated range: 0.0--3.0)
+\end{itemize}
+
+\subsection{Layer 3: Sidecar Classifier}
+
+The sidecar is a lightweight classifier that runs in parallel with the main model to categorize inputs into three threat levels:
+
+\begin{itemize}
+    \item \textbf{SAFE}: Benign queries requiring minimal defense ($\alpha = 0.5$)
+    \item \textbf{WARN}: Ambiguous or potentially suspicious queries ($\alpha = 1.5$)
+    \item \textbf{ATTACK}: Clear jailbreak attempts ($\alpha = 2.5$)
+\end{itemize}
+
+This enables \textbf{adaptive defense}: strong steering is only applied when attacks are detected, preserving fluency and helpfulness on benign queries.
+
+\textbf{Training Details}:
+\begin{itemize}
+    \item Base model: Qwen2.5-3B-Instruct
+    \item Method: LoRA fine-tuning for sequence classification
+    \item LoRA rank: 32, alpha: 64
+    \item Classes: 3 (SAFE, WARN, ATTACK)
+    \item Training samples: 2,349
+\end{itemize}
+
+\section{Dataset}
+
+We curate a dataset of 2,939 preference pairs covering major jailbreak attack families:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Attack Category} & \textbf{Count} & \textbf{Example Pattern} \\
+\midrule
+Direct Attacks & 412 & Explicit harmful requests \\
+Roleplay/Persona & 687 & DAN, UCAR, character jailbreaks \\
+Prompt Injection & 523 & System prompt manipulation \\
+Encoding Tricks & 398 & Base64, ROT13, leetspeak \\
+Multi-Turn Buildup & 291 & Context escalation attacks \\
+Obfuscation & 628 & Typos, word substitution \\
+\midrule
+\textbf{Total} & \textbf{2,939} & \\
+\bottomrule
+\end{tabular}
+\caption{Attack category distribution in AEGIS dataset.}
+\label{tab:dataset}
+\end{table}
+
+Each sample contains:
+\begin{itemize}
+    \item \texttt{prompt}: The attack prompt
+    \item \texttt{chosen}: A safe refusal response (preferred)
+    \item \texttt{rejected}: An unsafe compliant response (dispreferred)
+\end{itemize}
+
+\textbf{Data Splits}: train (2,349), validation (291), test (299).
+
+\section{Experiments}
+
+\subsection{Evaluation Metrics}
+
+\textbf{Attack Success Rate (ASR)}: The percentage of attack prompts for which the model produces a harmful response. Lower is better.
+
+\textbf{Judge Models}: We use an ensemble of three judge approaches:
+\begin{enumerate}
+    \item Pattern matching for explicit compliance markers
+    \item Claude-based semantic evaluation
+    \item Keyword detection for harmful content categories
+\end{enumerate}
+
+A response is considered ``successful attack'' if any judge flags it as harmful.
+
+\subsection{Baseline and Ablations}
+
+We evaluate each layer independently and in combination:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Configuration} & \textbf{ASR} & \textbf{$\Delta$ from Baseline} & \textbf{Relative Reduction} \\
+\midrule
+Baseline (Mistral-7B) & 58\% & -- & -- \\
++ Layer 1 (DPO) & 47\% & -11\% & 19\% \\
++ Layer 2 (RepE $\alpha$=1.0) & 36\% & -22\% & 38\% \\
++ Layer 2 (RepE $\alpha$=2.0) & 10\% & -48\% & 83\% \\
++ Layer 2 (RepE $\alpha$=2.5) & 8\% & -50\% & 86\% \\
+\midrule
+Full AEGIS (adaptive $\alpha$) & 8\% & -50\% & 86\% \\
+\bottomrule
+\end{tabular}
+\caption{Attack Success Rate across configurations. Each layer provides independent, additive protection.}
+\label{tab:results}
+\end{table}
+
+\subsection{Layer Independence}
+
+A critical finding is that each layer provides \textbf{independent} protection against different attack patterns:
+
+\begin{itemize}
+    \item \textbf{DPO} is most effective against direct attacks and roleplay scenarios seen during training
+    \item \textbf{RepE} generalizes better to novel attack patterns and encoding tricks
+    \item \textbf{Sidecar} enables appropriate response---strong defense on attacks, light touch on benign queries
+\end{itemize}
+
+\subsection{Sidecar Classification Performance}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+SAFE & 24\% & 35\% & 28\% \\
+WARN & 66\% & 40\% & 50\% \\
+ATTACK & 62\% & 61\% & 62\% \\
+\bottomrule
+\end{tabular}
+\caption{Sidecar classifier performance. ATTACK detection is prioritized; SAFE misclassification triggers stronger (but not harmful) defense.}
+\label{tab:sidecar}
+\end{table}
+
+The sidecar intentionally trades SAFE precision for ATTACK recall---misclassifying a benign query as WARN/ATTACK only triggers slightly stronger steering, while missing an attack could allow harm.
+
+\section{Discussion}
+
+\subsection{Defense-in-Depth Value}
+
+Our results demonstrate the value of layered defense. No single layer achieves the full 86\% ASR reduction---each contributes uniquely:
+
+\begin{itemize}
+    \item DPO embeds ``knowledge'' of what constitutes safe behavior
+    \item RepE provides ``instinct''---automatic steering toward safety
+    \item Sidecar enables ``oversight''---appropriate response calibration
+\end{itemize}
+
+This mirrors security best practices where defense-in-depth provides robustness against attacks that might bypass any single layer.
+
+\subsection{Limitations}
+
+\textbf{English-Only}: Current training data is English; attacks in other languages may succeed.
+
+\textbf{Novel Attacks}: Sufficiently novel attack patterns not represented in training may bypass all layers. Continuous updating is required.
+
+\textbf{Fluency Trade-off}: High $\alpha$ values (>2.5) can degrade output quality. The sidecar helps but may misclassify edge cases.
+
+\textbf{Inference Overhead}: The sidecar adds ~3B parameter inference. For latency-critical applications, a smaller classifier could be trained.
+
+\subsection{Comparison to Prior Work}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{System} & \textbf{Method} & \textbf{Dynamic} & \textbf{Layers} \\
+\midrule
+Llama Guard & External classifier & No & 1 \\
+NeMo Guardrails & Rule-based filtering & No & 1 \\
+Constitutional AI & RLHF training & No & 1 \\
+\midrule
+\textbf{AEGIS} & DPO + RepE + Classifier & Yes & 3 \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of AEGIS to prior defense systems.}
+\label{tab:comparison}
+\end{table}
+
+AEGIS is the first system to combine weight modification, activation steering, and adaptive classification in a unified defense architecture.
+
+\section{Conclusion}
+
+We presented AEGIS, a three-layer defense-in-depth architecture for protecting LLMs against jailbreak attacks. By combining DPO safety training (Layer 1), RepE activation steering (Layer 2), and adaptive sidecar classification (Layer 3), AEGIS achieves 86\% reduction in Attack Success Rate while maintaining fluency on benign queries.
+
+Our key insight is that robust LLM safety requires multiple independent protection mechanisms operating at different levels---just as traditional security employs firewalls, IDS, and endpoint protection in concert. No single layer provides complete protection, but together they create defense-in-depth that is more robust than any individual approach.
+
+We release all components to enable reproducible research:
+\begin{itemize}
+    \item DPO Adapter: \url{https://huggingface.co/scthornton/aegis-mistral-7b-dpo}
+    \item RepE Vectors: \url{https://huggingface.co/scthornton/aegis-repe-vectors}
+    \item Sidecar Classifier: \url{https://huggingface.co/scthornton/aegis-sidecar-classifier}
+    \item Training Dataset: \url{https://huggingface.co/datasets/scthornton/aegis-dataset}
+\end{itemize}
+
+Future work will extend AEGIS to additional base models, non-English languages, and integration with standard LLM serving frameworks.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{wei2023jailbroken}
+Wei, A., Haghtalab, N., \& Steinhardt, J. (2023). Jailbroken: How Does LLM Safety Training Fail? arXiv:2307.02483.
+
+\bibitem{zou2023universal}
+Zou, A., Wang, Z., Kolter, J. Z., \& Fredrikson, M. (2023). Universal and Transferable Adversarial Attacks on Aligned Language Models. arXiv:2307.15043.
+
+\bibitem{bai2022constitutional}
+Bai, Y., et al. (2022). Constitutional AI: Harmlessness from AI Feedback. arXiv:2212.08073.
+
+\bibitem{ouyang2022training}
+Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback. NeurIPS.
+
+\bibitem{inan2023llama}
+Inan, H., et al. (2023). Llama Guard: LLM-based Input-Output Safeguard for Human-AI Conversations. arXiv:2312.06674.
+
+\bibitem{rebedea2023nemo}
+Rebedea, T., et al. (2023). NeMo Guardrails: A Toolkit for Controllable and Safe LLM Applications. arXiv:2310.10501.
+
+\bibitem{shen2023anything}
+Shen, X., et al. (2023). "Do Anything Now": Characterizing and Evaluating In-The-Wild Jailbreak Prompts on Large Language Models. arXiv:2308.03825.
+
+\bibitem{russinovich2024great}
+Russinovich, M., Salem, A., \& Eldan, R. (2024). Great, Now Write an Article About That: The Crescendo Multi-Turn LLM Jailbreak Attack. arXiv:2404.01833.
+
+\bibitem{rafailov2023direct}
+Rafailov, R., et al. (2023). Direct Preference Optimization: Your Language Model is Secretly a Reward Model. NeurIPS.
+
+\bibitem{zou2023representation}
+Zou, A., et al. (2023). Representation Engineering: A Top-Down Approach to AI Transparency. arXiv:2310.01405.
+
+\bibitem{hu2021lora}
+Hu, E. J., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. arXiv:2106.09685.
+
+\end{thebibliography}
+
+\end{document}

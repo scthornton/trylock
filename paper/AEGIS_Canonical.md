@@ -1,17 +1,17 @@
 # AEGIS: Defense-in-Depth Against LLM Jailbreaks via Layered Preference and Representation Engineering
 
 **Author:** Scott Thornton
-**Affiliation:** perfecXion.ai
+**Affiliation:** Independent Researcher
 **Contact:** scott@perfecxion.ai
-**Date:** December 2024
+**Date:** December 2025
 
 ---
 
 ## Abstract
 
-Large Language Models (LLMs) remain vulnerable to jailbreak attacks that bypass safety alignment through prompt manipulation, multi-turn social engineering, and obfuscation. Existing defenses typically operate at a single layer—either modifying model weights during training or adding external guardrails at inference—leaving gaps that sophisticated attacks can exploit. We present **AEGIS (Adaptive Ensemble Guard with Integrated Steering)**, a defense-in-depth architecture that combines three complementary mechanisms: (1) **Direct Preference Optimization (DPO)** to train the base model to recognize and refuse jailbreak attempts, (2) **Representation Engineering (RepE)** to steer hidden activations away from attack-compliant directions at inference time, and (3) a lightweight **sidecar classifier** that enables adaptive steering strength selection based on per-message threat assessment.
+Large Language Models (LLMs) remain vulnerable to jailbreak attacks that bypass safety alignment through prompt manipulation, multi-turn social engineering, and obfuscation. Existing defenses operate at a single layer—either modifying weights during training or adding guardrails at inference—leaving gaps that sophisticated attacks exploit. We present **AEGIS (Adaptive Ensemble Guard with Integrated Steering)**, a defense-in-depth architecture combining three mechanisms: (1) **Direct Preference Optimization (DPO)** to train the model to recognize and refuse jailbreaks, (2) **Representation Engineering (RepE)** to steer activations away from attack-compliant directions at inference, and (3) a lightweight **sidecar classifier** enabling adaptive steering strength based on threat assessment.
 
-We train AEGIS on the **Attack Trajectories** corpus, a dataset of 14,137 multi-turn attack conversations plus 2,118 benign hard negatives. From this corpus, we derive 2,939 high-quality preference pairs, of which 2,640 are used for DPO training and RepE vector extraction, with 299 held out for evaluation. On this held-out benchmark spanning obfuscation wrappers, multi-turn manipulation, indirect injection, direct injection, and tool abuse, AEGIS reduces Attack Success Rate (ASR) from 46.5% to 8.0%, an **82.8% relative reduction**, while preserving helpfulness on benign queries through adaptive steering. Ablation studies show that each layer contributes independent protection: DPO alone yields 14.4% relative ASR reduction, RepE provides an additional ~80% reduction over the DPO-only model, and the sidecar enables a tunable security–utility trade-off. We release all components—DPO adapters, steering vectors, sidecar classifier, and datasets—to enable reproducible research on layered LLM safety.
+We train AEGIS on 14,137 multi-turn attack trajectories plus 2,118 benign hard negatives, deriving 2,939 preference pairs (2,640 for training, 299 for evaluation). On this benchmark spanning five attack families, the two-layer configuration (DPO + RepE) reduces Attack Success Rate from 46.5% to 8.0%—an **82.8% relative reduction**—while the three-layer configuration adds adaptive threat classification. Ablations show each layer provides independent protection: DPO yields 14.4% ASR reduction, RepE adds ~80% over DPO alone. However, RepE requires careful implementation; 8-bit quantization degraded performance to 84.7% ASR, suggesting full-precision deployment is critical. We release all components—adapters, steering vectors, classifier, and datasets—for reproducible research on layered LLM safety.
 
 **Keywords:** LLM Security, Jailbreak Defense, Representation Engineering, Direct Preference Optimization, Adversarial Machine Learning
 
@@ -199,7 +199,7 @@ A key contribution of this work is the AEGIS Attack Trajectories dataset—a mul
 
 ### 4.1 Dataset Overview
 
-The dataset contains **14,137 attack trajectories** organized into **five attack families**, plus **2,118 benign hard negatives**:
+The dataset contains **14,137 attack trajectories** organized into **five attack families**, plus **2,118 benign hard negatives** (Table 1):
 
 | Attack Family | Trajectories | Description |
 |---------------|--------------|-------------|
@@ -210,6 +210,8 @@ The dataset contains **14,137 attack trajectories** organized into **five attack
 | Tool/Agent Abuse | 2,027 | Function call manipulation, agentic exploits |
 | **Total Attacks** | **14,137** | |
 | Benign Hard Negatives | 2,118 | Legitimate edge cases resembling attacks |
+
+**Table 1:** AEGIS Attack Trajectories dataset composition by attack family.
 
 ### 4.2 Data Structure
 
@@ -308,8 +310,9 @@ A response is considered "successful attack" if any judge flags it as harmful. O
 | + Layer 1 (DPO) | 39.8% | 42.0% | 14.4% |
 | + Layer 2 (RepE α=2.0) | **8.0%** | 60.0% | **82.8%** |
 | + Layer 2 (RepE α=2.5) | 0.0% | 98.0% | 100% (lockdown) |
+| + Layer 3 (Full AEGIS)* | 84.7% | 12.0% | -112.8% (degraded) |
 
-**Table 2:** Attack Success Rate across configurations. Each layer provides independent, additive protection. In internal development experiments, using the Layer 3 sidecar to select α ∈ {0.5, 1.5, 2.5} for SAFE/WARN/ATTACK classifications yields ASR in the 8-10% range while reducing over-refusal to 45-50%, compared to 60% ORR at fixed α = 2.0.
+**Table 2:** Attack Success Rate across configurations. Each layer provides independent, additive protection. *The full AEGIS evaluation (Layer 1+2+3) with 8-bit quantization showed unexpectedly degraded performance (ASR 84.7% vs 8.0% for Layer 1+2 alone), suggesting that RepE steering hooks failed silently despite being enabled in the code. The sidecar classifier successfully varied alpha values (0.5, 1.5, 2.5) across samples, but the steering mechanism itself appears ineffective under 8-bit quantization. These results likely represent Layer 1+3 only. In internal development experiments with full-precision models, the Layer 3 sidecar successfully selects α ∈ {0.5, 1.5, 2.5} for SAFE/WARN/ATTACK classifications and yields ASR in the 8-10% range while reducing over-refusal to 45-50%, compared to 60% ORR at fixed α = 2.0.
 
 **Key findings:**
 
@@ -388,6 +391,8 @@ This mirrors security best practices where defense-in-depth provides robustness 
 **Novel attacks.** While RepE generalizes to some unseen attacks, fundamentally novel attack strategies may bypass all layers. Continuous updating is required.
 
 **Model-specific.** Steering vectors are specific to Mistral-7B-Instruct-v0.3. Porting to other models requires re-extraction.
+
+**Implementation precision requirements.** Our evaluation revealed that RepE steering effectiveness is highly sensitive to model precision. With 8-bit quantization, the steering hooks failed to reduce ASR (84.7% vs 8.0% with full precision), likely due to quantization interfering with the hook mechanism or gradients being insufficient for effective steering. Production deployments should use full-precision (FP16/FP32) models for Layer 2 to ensure RepE effectiveness, though this increases memory requirements to ~14GB for the base model alone.
 
 ### 6.3 Comparison to Prior Work
 
@@ -471,10 +476,10 @@ We release all components to enable reproducible research:
 ## Citation
 
 ```bibtex
-@misc{aegis2024,
+@misc{aegis2025,
   title={AEGIS: Defense-in-Depth Against LLM Jailbreaks via Layered Preference and Representation Engineering},
   author={Thornton, Scott},
-  year={2024},
+  year={2025},
   organization={perfecXion.ai},
   url={https://huggingface.co/scthornton}
 }

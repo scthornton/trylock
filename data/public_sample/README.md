@@ -1,6 +1,24 @@
+---
+language:
+- en
+license: apache-2.0
+task_categories:
+- text-generation
+- text-classification
+pretty_name: AEGIS Sample Dataset
+size_categories:
+- n<1K
+tags:
+- jailbreak
+- defense
+- preference-learning
+- llm-security
+- adversarial-robustness
+---
+
 # AEGIS Sample Dataset
 
-This is a **sample dataset** containing 50 diverse examples from the AEGIS training corpus.
+This is a **sample dataset** containing 48 diverse examples from the AEGIS training corpus.
 
 ## Purpose
 

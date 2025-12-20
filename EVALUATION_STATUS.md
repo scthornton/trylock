@@ -1,4 +1,4 @@
-# AEGIS Evaluation Status
+# TRYLOCK Evaluation Status
 
 ## Current Situation
 
@@ -25,7 +25,7 @@ This is a known incompatibility between PEFT, PyTorch 2.x, and macOS Metal/MPS b
 
 ### Why This Blocks Evaluation
 
-The AEGIS DPO model (`scthornton/aegis-mistral-7b-dpo`) is stored as a PEFT LoRA adapter:
+The TRYLOCK DPO model (`scthornton/trylock-mistral-7b-dpo`) is stored as a PEFT LoRA adapter:
 ```
 adapter_config.json
 adapter_model.safetensors
@@ -46,13 +46,13 @@ We cannot load it without functioning PEFT.
 - Guaranteed compatibility
 
 **Steps:**
-1. Open `/Users/scott/perfecxion/datasets/aegis/AEGIS_Evaluation_Colab.ipynb`
+1. Open `/Users/scott/perfecxion/datasets/trylock/TRYLOCK_Evaluation_Colab.ipynb`
 2. Upload to Google Colab (File → Upload notebook)
 3. Change runtime to GPU (Runtime → Change runtime type → GPU)
 4. Run all cells
 5. Upload `data/dpo/test.jsonl` when prompted
 6. Wait ~10-15 minutes
-7. Download `eval_full_aegis.json` with results
+7. Download `eval_full_trylock.json` with results
 
 **Expected Output:**
 ```
@@ -88,16 +88,16 @@ WORKDIR /app
 
 CMD ["python", "eval_cpu_only.py", \
      "--test-file", "test.jsonl", \
-     "--dpo-adapter", "scthornton/aegis-mistral-7b-dpo", \
-     "--repe-vectors", "scthornton/aegis-repe-vectors", \
-     "--sidecar", "scthornton/aegis-sidecar-classifier", \
+     "--dpo-adapter", "scthornton/trylock-mistral-7b-dpo", \
+     "--repe-vectors", "scthornton/trylock-repe-vectors", \
+     "--sidecar", "scthornton/trylock-sidecar-classifier", \
      "--output", "results.json"]
 ```
 
 2. Build and run:
 ```bash
-docker build -t aegis-eval .
-docker run -v $(pwd)/outputs:/app/outputs aegis-eval
+docker build -t trylock-eval .
+docker run -v $(pwd)/outputs:/app/outputs trylock-eval
 ```
 
 **Note:** CPU-only evaluation will take 10-15 hours. For GPU support in Docker, you need NVIDIA Docker toolkit.
@@ -135,7 +135,7 @@ docker run -v $(pwd)/outputs:/app/outputs aegis-eval
 
 2. **Evaluation infrastructure**
    - `eval_cpu_only.py` - CPU-safe evaluation script
-   - `AEGIS_Evaluation_Colab.ipynb` - Ready-to-run Colab notebook
+   - `TRYLOCK_Evaluation_Colab.ipynb` - Ready-to-run Colab notebook
    - `run_eval.sh` - Bash wrapper with environment settings
 
 3. **Root cause diagnosis**
@@ -145,7 +145,7 @@ docker run -v $(pwd)/outputs:/app/outputs aegis-eval
 
 ### ⏳ Pending (Blocked on Evaluation)
 
-**10th Paper Fix:** Add Full AEGIS (Layer 1+2+3) row to Table 2
+**10th Paper Fix:** Add Full TRYLOCK (Layer 1+2+3) row to Table 2
 
 Current Table 2 (incomplete):
 | Configuration | ASR (↓) | ORR (↓) |
@@ -154,7 +154,7 @@ Current Table 2 (incomplete):
 | Layer 1 (DPO) | 39.8% | 20.1% |
 | Layer 2 (RepE α=2.0) | 19.7% | 8.4% |
 | Layer 3 (Adaptive α) | 68.4% | 16.1% |
-| **Layer 1+2+3 (AEGIS)** | **??.?%** | **??.?%** | ← NEEDS EVALUATION
+| **Layer 1+2+3 (TRYLOCK)** | **??.?%** | **??.?%** | ← NEEDS EVALUATION
 
 Once you run the evaluation, you'll get these exact numbers to complete the table.
 
@@ -180,15 +180,15 @@ Once you run the evaluation, you'll get these exact numbers to complete the tabl
 - `scripts/eval_cpu_only.py` - CPU-safe evaluation with MPS disabled
 - `scripts/run_eval.sh` - Bash wrapper with environment variables
 - `scripts/test_model_loading.py` - Diagnostic script for tokenizer
-- `AEGIS_Evaluation_Colab.ipynb` - **Ready-to-run Colab notebook** ⭐
+- `TRYLOCK_Evaluation_Colab.ipynb` - **Ready-to-run Colab notebook** ⭐
 
 ### Documentation
 - `SEGFAULT_FIX.md` - Comprehensive troubleshooting guide
-- `RUN_FULL_AEGIS_EVAL.md` - Instructions for running evaluation
+- `RUN_FULL_TRYLOCK_EVAL.md` - Instructions for running evaluation
 - `EVALUATION_STATUS.md` - This file
 
 ### Paper Updates
-- `paper/AEGIS_Canonical.md` - Paper with 9/10 fixes applied
+- `paper/TRYLOCK_Canonical.md` - Paper with 9/10 fixes applied
 
 ---
 
@@ -196,7 +196,7 @@ Once you run the evaluation, you'll get these exact numbers to complete the tabl
 
 ```bash
 # 1. Upload Colab notebook
-open AEGIS_Evaluation_Colab.ipynb
+open TRYLOCK_Evaluation_Colab.ipynb
 # (Upload to https://colab.research.google.com)
 
 # 2. Run notebook (15 minutes)

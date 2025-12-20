@@ -1,0 +1,47 @@
+# TRYLOCK RepE (Representation Engineering) Configuration
+# Circuit breaker training for Llama 3.1 8B
+
+repe:
+  # Model configuration
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  dpo_checkpoint: "./outputs/trylock-dpo-llama3-8b"  # Optional: use DPO checkpoint
+  trust_remote_code: true
+
+  # Layer selection
+  # Llama 3.1 8B has 32 layers (0-31)
+  # Target middle-to-late layers where semantic meaning is encoded
+  target_layers:
+    - 10
+    - 14
+    - 18
+    - 22
+  layer_selection_method: "fixed"  # Options: fixed, auto
+  auto_select_top_k: 4             # If auto, select top-k discriminative layers
+
+  # Control vector computation method
+  method: "pca"                    # Options: pca, mean_diff, logistic
+  n_components: 1                  # For PCA: number of principal components
+  normalize_vectors: true          # Normalize control vectors to unit length
+
+  # Data configuration
+  activations_file: "data/activations/pivot_activations.npz"
+  train_file: "data/tier1_open/attacks/train.jsonl"
+  max_samples: 1000  # For efficiency, use subset for RepE
+
+  # Alpha presets for inference
+  # α controls steering strength:
+  #   0.0 = no steering (research mode)
+  #   1.0 = standard defense
+  #   2.5 = maximum defense (lockdown mode)
+  alpha_presets:
+    research: 0.0
+    balanced: 1.0
+    enhanced: 1.5
+    lockdown: 2.5
+
+  # Output configuration
+  output_dir: "./outputs/trylock-repe-llama3-8b"
+
+  # Hardware configuration
+  bf16: true
+  device: "auto"

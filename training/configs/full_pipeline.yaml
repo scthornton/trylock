@@ -1,0 +1,63 @@
+# TRYLOCK Full Training Pipeline Configuration
+# Orchestrates all training stages in sequence
+
+pipeline:
+  # Global settings
+  base_model: "meta-llama/Llama-3.1-8B-Instruct"
+  output_base: "./outputs/trylock-full"
+
+  # Data paths
+  data:
+    train_file: "data/tier1_open/attacks/train.jsonl"
+    eval_file: "data/tier1_open/attacks/eval.jsonl"
+    benign_file: "data/tier1_open/benign/train.jsonl"
+    activations_file: "data/activations/pivot_activations.npz"
+
+  # Stage 1: SFT Warmup
+  sft:
+    enabled: true
+    config_file: "training/configs/llama3_8b_sft.yaml"
+    output_subdir: "sft"
+
+  # Stage 2: DPO Preference Learning
+  dpo:
+    enabled: true
+    config_file: "training/configs/llama3_8b_dpo.yaml"
+    output_subdir: "dpo"
+    depends_on: "sft"  # Load SFT checkpoint
+
+  # Stage 3: RepE Circuit Breaker
+  repe:
+    enabled: true
+    config_file: "training/configs/llama3_8b_repe.yaml"
+    output_subdir: "repe"
+    depends_on: "dpo"  # Use DPO model for activation capture
+
+  # Stage 4: Sidecar Classifier
+  sidecar:
+    enabled: true
+    config_file: "training/configs/sidecar_3b.yaml"
+    output_subdir: "sidecar"
+    depends_on: null  # Trained independently
+
+  # Hardware
+  hardware:
+    bf16: true
+    gradient_checkpointing: true
+    device_map: "auto"
+
+  # Logging
+  logging:
+    report_to: "none"  # Options: none, wandb, tensorboard
+    project_name: "trylock-training"
+    run_name: null  # Auto-generated if null
+    log_level: "INFO"
+
+# Target metrics for validation
+targets:
+  single_turn_asr: 0.10      # ≤10% Attack Success Rate
+  multi_turn_asr: 0.15       # ≤15% for multi-turn
+  indirect_asr: 0.20         # ≤20% for indirect injection
+  novel_wrapper_asr: 0.30    # ≤30% for novel wrappers
+  over_refusal_rate: 0.04    # ≤4% over-refusal
+  capability_preservation: 0.95  # ≥95% on general tasks

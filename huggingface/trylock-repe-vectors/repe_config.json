@@ -1,0 +1,94 @@
+{
+  "config": {
+    "target_layers": [
+      12,
+      14,
+      16,
+      18,
+      20,
+      22,
+      24,
+      26
+    ],
+    "method": "difference",
+    "probe_C": 1.0,
+    "alpha_research": 0.0,
+    "alpha_balanced": 1.0,
+    "alpha_elevated": 1.5,
+    "alpha_lockdown": 2.5
+  },
+  "vectors": [
+    {
+      "layer_idx": 12,
+      "method": "difference",
+      "train_accuracy": 0.6800000071525574,
+      "val_accuracy": 0.6800000071525574,
+      "val_auc": null,
+      "mean_norm": 3.609375,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 14,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 4.53125,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 16,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 6.78125,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 18,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 9.5,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 20,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 12.0625,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 22,
+      "method": "difference",
+      "train_accuracy": 0.6800000071525574,
+      "val_accuracy": 0.6800000071525574,
+      "val_auc": null,
+      "mean_norm": 13.6875,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 24,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 15.375,
+      "std_norm": 0.1
+    },
+    {
+      "layer_idx": 26,
+      "method": "difference",
+      "train_accuracy": 0.6833333373069763,
+      "val_accuracy": 0.6833333373069763,
+      "val_auc": null,
+      "mean_norm": 17.875,
+      "std_norm": 0.1
+    }
+  ]
+}

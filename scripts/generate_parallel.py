@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Parallel AEGIS Trajectory Generator
+Parallel TRYLOCK Trajectory Generator
 
 Runs multiple generation processes in parallel, splitting work between Claude and OpenAI.
 
@@ -98,13 +98,13 @@ def monitor_progress(processes: dict, log_dir: Path, data_dir: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Parallel AEGIS trajectory generation")
+    parser = argparse.ArgumentParser(description="Parallel TRYLOCK trajectory generation")
     parser.add_argument("--target", type=int, default=500, help="Target per category")
     parser.add_argument("--dry-run", action="store_true", help="Show plan without executing")
     args = parser.parse_args()
 
     print("=" * 60)
-    print("AEGIS Parallel Generator")
+    print("TRYLOCK Parallel Generator")
     print("=" * 60)
     print(f"\nTarget: {args.target} per category")
     print(f"Total: {args.target * 6} trajectories")

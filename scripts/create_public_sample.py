@@ -48,7 +48,7 @@ def create_sample_dataset():
     output_dir = Path("data/public_sample")
     output_dir.mkdir(exist_ok=True)
 
-    output_file = output_dir / "aegis_sample.jsonl"
+    output_file = output_dir / "trylock_sample.jsonl"
     with open(output_file, "w") as f:
         for item in samples:
             f.write(json.dumps(item) + "\n")
@@ -58,9 +58,9 @@ def create_sample_dataset():
     # Create README
     readme = output_dir / "README.md"
     with open(readme, "w") as f:
-        f.write("""# AEGIS Sample Dataset
+        f.write("""# TRYLOCK Sample Dataset
 
-This is a **sample dataset** containing 50 diverse examples from the AEGIS training corpus.
+This is a **sample dataset** containing 50 diverse examples from the TRYLOCK training corpus.
 
 ## Purpose
 
@@ -72,7 +72,7 @@ This sample demonstrates:
 
 ## Full Dataset
 
-The complete AEGIS dataset (2,939 preference pairs) is **private** to protect intellectual property.
+The complete TRYLOCK dataset (2,939 preference pairs) is **private** to protect intellectual property.
 
 ## Data Format
 
@@ -101,7 +101,7 @@ import json
 
 # Load samples
 samples = []
-with open("aegis_sample.jsonl") as f:
+with open("trylock_sample.jsonl") as f:
     for line in f:
         samples.append(json.loads(line))
 
@@ -118,8 +118,8 @@ print(f"Attack family: {example['metadata']['family']}")
 If you use this dataset, please cite:
 
 ```bibtex
-@article{thornton2025aegis,
-  title={AEGIS: Adaptive LLM Jailbreak Defense via Layered Security Architecture},
+@article{thornton2025trylock,
+  title={TRYLOCK: Adaptive LLM Jailbreak Defense via Layered Security Architecture},
   author={Thornton, Scott},
   year={2025}
 }
@@ -127,14 +127,14 @@ If you use this dataset, please cite:
 
 ## License
 
-This sample dataset is released under the same license as the AEGIS models.
+This sample dataset is released under the same license as the TRYLOCK models.
 
 ## Full Models
 
-The trained AEGIS models are publicly available:
-- DPO Adapter: `scthornton/aegis-mistral-7b-dpo`
-- RepE Vectors: `scthornton/aegis-repe-vectors`
-- Sidecar Classifier: `scthornton/aegis-sidecar-classifier`
+The trained TRYLOCK models are publicly available:
+- DPO Adapter: `scthornton/trylock-mistral-7b-dpo`
+- RepE Vectors: `scthornton/trylock-repe-vectors`
+- Sidecar Classifier: `scthornton/trylock-sidecar-classifier`
 
 ## Contact
 
@@ -150,4 +150,4 @@ if __name__ == "__main__":
     output_file, n = create_sample_dataset()
     print(f"\n✅ Public sample dataset created: {n} examples")
     print(f"📁 Location: {output_file}")
-    print("\nNext: Upload to HuggingFace as scthornton/aegis-demo-dataset")
+    print("\nNext: Upload to HuggingFace as scthornton/trylock-demo-dataset")

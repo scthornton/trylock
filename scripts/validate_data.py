@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Data Validation Script
+TRYLOCK Data Validation Script
 
 Validates generated trajectories for:
 - JSON parsing
@@ -193,7 +193,7 @@ def validate_file(filepath: Path, result: ValidationResult) -> int:
 def print_report(result: ValidationResult):
     """Print validation report."""
     print("\n" + "=" * 60)
-    print("AEGIS DATA VALIDATION REPORT")
+    print("TRYLOCK DATA VALIDATION REPORT")
     print("=" * 60)
 
     # Summary
@@ -272,7 +272,7 @@ def print_report(result: ValidationResult):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate AEGIS trajectories")
+    parser = argparse.ArgumentParser(description="Validate TRYLOCK trajectories")
     parser.add_argument("--data-dir", type=str, default="data/tier1_open/attacks",
                         help="Directory containing trajectory files")
     parser.add_argument("--fix", action="store_true", help="Auto-fix minor issues")

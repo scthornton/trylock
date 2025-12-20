@@ -1,0 +1,55 @@
+# TRYLOCK Development Configuration
+# Less restrictive settings for testing
+
+gateway:
+  sidecar_url: "http://localhost:8081"
+  sidecar_timeout: 2.0
+  sidecar_enabled: true
+
+  warn_threshold: 0.4
+  block_threshold: 0.9
+
+  rate_limit_enabled: false
+  abuse_detection_enabled: false
+
+  filter_responses: false
+  audit_logging: true
+  log_file: "./logs/gateway_audit.jsonl"
+  log_level: "DEBUG"
+
+  policies:
+    safe: "allow"
+    low: "allow"
+    medium: "allow"
+    high: "warn"
+    critical: "block"
+
+  target_url: "http://localhost:11434/api/chat"
+  target_timeout: 300.0
+
+sidecar_service:
+  model_path: "./outputs/trylock-sidecar"
+  device: "cpu"
+  max_seq_length: 2048
+
+  label_names: ["SAFE", "WARN", "ATTACK"]
+  warn_threshold: 0.3
+  attack_threshold: 0.7
+
+  host: "0.0.0.0"
+  port: 8081
+  workers: 1
+
+  batch_enabled: false
+  cache_enabled: false
+
+  use_half_precision: false
+  log_level: "DEBUG"
+  log_requests: true
+
+intervention:
+  repe_enabled: false
+  system_prompt_enabled: true
+  filter_enabled: false
+  append_enabled: false
+  graceful_refusal_enabled: true

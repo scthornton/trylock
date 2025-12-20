@@ -1,0 +1,168 @@
+# TRYLOCK Docker Compose Configuration
+# Full deployment stack with gateway, sidecar, and optional LLM
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # Security Gateway
+  # ===========================================
+  gateway:
+    build:
+      context: .
+      target: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_PORT=8080
+      - SIDECAR_URL=http://sidecar:8081
+      - TARGET_URL=${TARGET_LLM_URL:-http://ollama:11434/api/chat}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./logs:/app/logs
+    depends_on:
+      sidecar:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - trylock-network
+
+  # ===========================================
+  # Sidecar Classifier
+  # ===========================================
+  sidecar:
+    build:
+      context: .
+      target: sidecar
+    ports:
+      - "8081:8081"
+    environment:
+      - SIDECAR_HOST=0.0.0.0
+      - SIDECAR_PORT=8081
+      - MODEL_PATH=/models/trylock-sidecar
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./models:/models:ro
+      - ./configs:/app/configs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - trylock-network
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+
+  # ===========================================
+  # Sidecar Classifier (GPU)
+  # ===========================================
+  sidecar-gpu:
+    build:
+      context: .
+      target: sidecar-gpu
+    ports:
+      - "8082:8081"
+    environment:
+      - SIDECAR_HOST=0.0.0.0
+      - SIDECAR_PORT=8081
+      - MODEL_PATH=/models/trylock-sidecar
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./models:/models:ro
+      - ./configs:/app/configs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - trylock-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - gpu
+
+  # ===========================================
+  # Ollama (Optional local LLM)
+  # ===========================================
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - trylock-network
+    profiles:
+      - local-llm
+
+  # ===========================================
+  # Prometheus (Monitoring)
+  # ===========================================
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deployment/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - trylock-network
+    profiles:
+      - monitoring
+
+  # ===========================================
+  # Grafana (Dashboards)
+  # ===========================================
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deployment/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    restart: unless-stopped
+    networks:
+      - trylock-network
+    profiles:
+      - monitoring
+
+networks:
+  trylock-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+  prometheus-data:
+  grafana-data:

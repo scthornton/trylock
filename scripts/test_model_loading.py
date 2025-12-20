@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test if we can load AEGIS models without crashing.
+Test if we can load TRYLOCK models without crashing.
 """
 
 import os

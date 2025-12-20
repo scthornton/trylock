@@ -22,7 +22,7 @@ def test_generation():
         print("  export ANTHROPIC_API_KEY=sk-ant-...")
         return False
 
-    print("Testing AEGIS trajectory generation...")
+    print("Testing TRYLOCK trajectory generation...")
     print("=" * 50)
 
     try:
@@ -84,7 +84,7 @@ def test_generation():
         print("-" * 50)
 
         sample = {
-            "id": "aegis-test-001",
+            "id": "trylock-test-001",
             "attack_metadata": {
                 "family": config.attack_family,
                 "type": config.attack_type,
@@ -106,7 +106,7 @@ def test_generation():
 
     except ImportError as e:
         print(f"\n✗ Import error: {e}")
-        print("  Make sure you're in the aegis directory and dependencies are installed")
+        print("  Make sure you're in the trylock directory and dependencies are installed")
         return False
     except Exception as e:
         print(f"\n✗ Error: {e}")

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-AEGIS Data Generation CLI
+TRYLOCK Data Generation CLI
 
-Generate attack trajectories for AEGIS training data.
+Generate attack trajectories for TRYLOCK training data.
 
 Usage:
     python generate_data.py generate --count 100 --output data/output.jsonl
@@ -23,13 +23,13 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from generation.pipeline import AEGISPipeline, MockPipeline, PipelineConfig, generate_benign_hard_negatives
+from generation.pipeline import TRYLOCKPipeline, MockPipeline, PipelineConfig, generate_benign_hard_negatives
 from generation.mutation_engine import MutationEngine, SimpleMutationEngine
 from data.schema.validator import TrajectoryValidator
 
 app = typer.Typer(
-    name="aegis",
-    help="AEGIS Dataset Generation Tools",
+    name="trylock",
+    help="TRYLOCK Dataset Generation Tools",
     add_completion=False,
 )
 console = Console()
@@ -79,7 +79,7 @@ def generate(
     ),
 ):
     """Generate attack trajectories."""
-    console.print(f"\n[bold blue]AEGIS Data Generation[/bold blue]")
+    console.print(f"\n[bold blue]TRYLOCK Data Generation[/bold blue]")
     console.print(f"Output: {output}")
     console.print(f"Count: {count}")
     console.print(f"Mutations per trajectory: {mutations}")
@@ -99,7 +99,7 @@ def generate(
         pipeline = MockPipeline(config)
         console.print("[yellow]Using mock pipeline - no API calls[/yellow]\n")
     else:
-        pipeline = AEGISPipeline(config)
+        pipeline = TRYLOCKPipeline(config)
 
     # Generate trajectories
     with Progress(
@@ -154,8 +154,8 @@ def validate(
     input_file: Path = typer.Argument(..., help="Input JSONL file to validate"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show all errors"),
 ):
-    """Validate trajectory file against AEGIS schema."""
-    console.print(f"\n[bold blue]AEGIS Validator[/bold blue]")
+    """Validate trajectory file against TRYLOCK schema."""
+    console.print(f"\n[bold blue]TRYLOCK Validator[/bold blue]")
     console.print(f"Input: {input_file}\n")
 
     if not input_file.exists():
@@ -221,7 +221,7 @@ def mutate(
     ),
 ):
     """Generate mutations of existing trajectories."""
-    console.print(f"\n[bold blue]AEGIS Mutation Engine[/bold blue]")
+    console.print(f"\n[bold blue]TRYLOCK Mutation Engine[/bold blue]")
     console.print(f"Input: {input_file}")
     console.print(f"Mutations per trajectory: {count}")
     console.print(f"Using mock mutations: {mock}\n")
@@ -289,7 +289,7 @@ def benign(
     ),
 ):
     """Generate benign hard negative examples."""
-    console.print(f"\n[bold blue]AEGIS Benign Hard Negatives[/bold blue]")
+    console.print(f"\n[bold blue]TRYLOCK Benign Hard Negatives[/bold blue]")
     console.print(f"Output: {output}")
     console.print(f"Count: {count}\n")
 
@@ -304,7 +304,7 @@ def stats(
     input_file: Path = typer.Argument(..., help="Input JSONL file"),
 ):
     """Show statistics for a trajectory file."""
-    console.print(f"\n[bold blue]AEGIS Dataset Statistics[/bold blue]")
+    console.print(f"\n[bold blue]TRYLOCK Dataset Statistics[/bold blue]")
     console.print(f"Input: {input_file}\n")
 
     if not input_file.exists():

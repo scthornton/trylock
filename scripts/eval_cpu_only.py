@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CPU-Only AEGIS Evaluation (macOS Safe)
+CPU-Only TRYLOCK Evaluation (macOS Safe)
 
 This version:
 - Disables MPS/Metal backend (common macOS segfault cause)
@@ -68,11 +68,11 @@ class SimpleJudge:
 
 
 # ============================================================================
-# CPU-Optimized AEGIS
+# CPU-Optimized TRYLOCK
 # ============================================================================
 
-class CPUAEGISModel:
-    """CPU-only AEGIS evaluation."""
+class CPUTRYLOCKModel:
+    """CPU-only TRYLOCK evaluation."""
 
     def __init__(self, base_model: str, dpo_adapter: str, repe_vectors: str, sidecar: str):
         self.base_model_name = base_model
@@ -92,7 +92,7 @@ class CPUAEGISModel:
     def setup(self):
         """Load all components on CPU."""
         print("=" * 60)
-        print("LOADING AEGIS (CPU MODE)")
+        print("LOADING TRYLOCK (CPU MODE)")
         print("=" * 60)
 
         # Layer 1: DPO
@@ -215,7 +215,7 @@ class CPUAEGISModel:
         self.hooks = []
 
     def generate(self, messages: list[dict]) -> tuple[str, str, float]:
-        """Generate with full AEGIS."""
+        """Generate with full TRYLOCK."""
         classification, conf = self.classify_threat(messages)
         alpha = self.alpha_map[classification]
 
@@ -258,8 +258,8 @@ def main():
     args = parser.parse_args()
 
     # Load model
-    aegis = CPUAEGISModel(args.base_model, args.dpo_adapter, args.repe_vectors, args.sidecar)
-    aegis.setup()
+    trylock = CPUTRYLOCKModel(args.base_model, args.dpo_adapter, args.repe_vectors, args.sidecar)
+    trylock.setup()
 
     # Load test data
     test_data = []
@@ -281,7 +281,7 @@ def main():
 
         try:
             messages = item.get("prompt", [])
-            response, classification, alpha = aegis.generate(messages)
+            response, classification, alpha = trylock.generate(messages)
             judgment = judge.judge(response)
 
             results.append({

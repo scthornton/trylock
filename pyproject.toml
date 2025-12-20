@@ -1,0 +1,147 @@
+[project]
+name = "aegis"
+version = "2.0.0"
+description = "Adversarial Enterprise Guard for Intrinsic Security - Dataset and training pipeline for improving LLM resistance to prompt-based attacks"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Scott Thornton", email = "scott@perfexion.ai"}
+]
+keywords = [
+    "llm-security",
+    "prompt-injection",
+    "adversarial-ml",
+    "red-teaming",
+    "jailbreak-defense"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+]
+
+dependencies = [
+    # Core ML
+    "torch>=2.0",
+    "transformers>=4.40",
+    "peft>=0.10",
+    "trl>=0.8",
+    "datasets>=2.18",
+    "safetensors>=0.4",
+    "accelerate>=0.28",
+    "bitsandbytes>=0.43",
+
+    # Data handling
+    "pydantic>=2.0",
+    "jsonschema>=4.0",
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "pandas>=2.0",
+
+    # CLI and utilities
+    "tqdm>=4.66",
+    "rich>=13.0",
+    "typer>=0.9",
+
+    # API clients
+    "httpx>=0.27",
+    "openai>=1.0",
+    "anthropic>=0.25",
+
+    # Evaluation
+    "scikit-learn>=1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "pytest-asyncio>=0.23",
+    "black>=24.0",
+    "ruff>=0.3",
+    "mypy>=1.8",
+    "pre-commit>=3.6",
+]
+
+vllm = [
+    "vllm>=0.4",
+]
+
+flash-attn = [
+    "flash-attn>=2.5",
+]
+
+[project.scripts]
+aegis = "aegis.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/perfexion-ai/aegis"
+Documentation = "https://aegis.perfexion.ai"
+Repository = "https://github.com/perfexion-ai/aegis"
+Issues = "https://github.com/perfexion-ai/aegis/issues"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["generation*", "training*", "eval*", "deployment*", "data*", "taxonomy*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"

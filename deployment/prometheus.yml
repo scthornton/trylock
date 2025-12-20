@@ -1,0 +1,32 @@
+# Prometheus Configuration for TRYLOCK Monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Gateway metrics
+  - job_name: 'trylock-gateway'
+    static_configs:
+      - targets: ['gateway:8080']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # Sidecar metrics
+  - job_name: 'trylock-sidecar'
+    static_configs:
+      - targets: ['sidecar:8081']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

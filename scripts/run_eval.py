@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Rigorous Evaluation Framework
+TRYLOCK Rigorous Evaluation Framework
 
 Academic-quality evaluation for arxiv publication. Includes:
 1. Multiple judge methods (rule-based + LLM judge)
@@ -11,7 +11,7 @@ Academic-quality evaluation for arxiv publication. Includes:
 Usage:
     python scripts/run_eval.py \
         --baseline mistralai/Mistral-7B-Instruct-v0.3 \
-        --finetuned ./outputs/aegis-mistral-7b \
+        --finetuned ./outputs/trylock-mistral-7b \
         --test-file data/dpo/test.jsonl \
         --use-llm-judge \
         --output eval_results.json
@@ -849,12 +849,12 @@ class ModelEvaluator:
 
         # PHASE 2: Generate fine-tuned responses
         print("\n" + "=" * 50)
-        print("PHASE 2: Generating AEGIS (fine-tuned) responses")
+        print("PHASE 2: Generating TRYLOCK (fine-tuned) responses")
         print("=" * 50)
         model = self._load_model("finetuned")
 
         for i, (item, result) in enumerate(tqdm(
-            zip(test_data, results), total=len(test_data), desc="AEGIS"
+            zip(test_data, results), total=len(test_data), desc="TRYLOCK"
         )):
             if result.error:
                 continue  # Skip if baseline failed
@@ -1014,7 +1014,7 @@ class ModelEvaluator:
 def print_report(metrics: EvaluationResults):
     """Print comprehensive evaluation report."""
     print("\n" + "=" * 70)
-    print("AEGIS EVALUATION REPORT")
+    print("TRYLOCK EVALUATION REPORT")
     print("=" * 70)
 
     print(f"\nConfiguration:")
@@ -1027,7 +1027,7 @@ def print_report(metrics: EvaluationResults):
     print("OVERALL RESULTS")
     print(f"{'─' * 70}")
 
-    print(f"\n{'Metric':<35} {'Baseline':>15} {'AEGIS':>15}")
+    print(f"\n{'Metric':<35} {'Baseline':>15} {'TRYLOCK':>15}")
     print(f"{'-' * 35} {'-' * 15} {'-' * 15}")
 
     base_asr_str = f"{metrics.baseline_asr:.1%} [{metrics.baseline_asr_ci['lower']:.1%}-{metrics.baseline_asr_ci['upper']:.1%}]"
@@ -1060,7 +1060,7 @@ def print_report(metrics: EvaluationResults):
     print(f"\n{'─' * 70}")
     print("ASR BY ATTACK FAMILY")
     print(f"{'─' * 70}")
-    print(f"{'Family':<30} {'Baseline':>12} {'AEGIS':>12} {'Δ':>10} {'n':>6}")
+    print(f"{'Family':<30} {'Baseline':>12} {'TRYLOCK':>12} {'Δ':>10} {'n':>6}")
     print(f"{'-' * 30} {'-' * 12} {'-' * 12} {'-' * 10} {'-' * 6}")
 
     for family in sorted(metrics.asr_by_family.keys()):
@@ -1074,7 +1074,7 @@ def print_report(metrics: EvaluationResults):
     print(f"\n{'─' * 70}")
     print("ASR BY DIFFICULTY")
     print(f"{'─' * 70}")
-    print(f"{'Difficulty':<30} {'Baseline':>12} {'AEGIS':>12} {'Δ':>10} {'n':>6}")
+    print(f"{'Difficulty':<30} {'Baseline':>12} {'TRYLOCK':>12} {'Δ':>10} {'n':>6}")
     print(f"{'-' * 30} {'-' * 12} {'-' * 12} {'-' * 10} {'-' * 6}")
 
     for diff in ["easy", "medium", "hard", "unknown"]:
@@ -1091,9 +1091,9 @@ def print_report(metrics: EvaluationResults):
     print("=" * 70)
 
     if metrics.asr_reduction_relative > 0:
-        print(f"\n✓ AEGIS reduced attack success rate by {metrics.asr_reduction_relative:.1%} relative")
+        print(f"\n✓ TRYLOCK reduced attack success rate by {metrics.asr_reduction_relative:.1%} relative")
         print(f"  • Baseline ASR: {metrics.baseline_asr:.1%}")
-        print(f"  • AEGIS ASR: {metrics.finetuned_asr:.1%}")
+        print(f"  • TRYLOCK ASR: {metrics.finetuned_asr:.1%}")
         if mcnemar.get("significant"):
             print(f"  • Improvement is statistically significant (p={mcnemar['p_value']:.4f})")
         else:
@@ -1101,14 +1101,14 @@ def print_report(metrics: EvaluationResults):
     else:
         print(f"\n✗ WARNING: No ASR improvement detected")
         print(f"  • Baseline ASR: {metrics.baseline_asr:.1%}")
-        print(f"  • AEGIS ASR: {metrics.finetuned_asr:.1%}")
+        print(f"  • TRYLOCK ASR: {metrics.finetuned_asr:.1%}")
 
     print("=" * 70)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AEGIS Rigorous Model Evaluation",
+        description="TRYLOCK Rigorous Model Evaluation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -1119,7 +1119,7 @@ def main():
     )
     parser.add_argument(
         "--finetuned", type=str,
-        default="./outputs/aegis-mistral-7b",
+        default="./outputs/trylock-mistral-7b",
         help="Fine-tuned model path (PEFT adapter)",
     )
     parser.add_argument(
@@ -1151,7 +1151,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 70)
-    print("AEGIS RIGOROUS EVALUATION")
+    print("TRYLOCK RIGOROUS EVALUATION")
     print("=" * 70)
 
     # Create evaluator

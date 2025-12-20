@@ -8,7 +8,7 @@ from pathlib import Path
 
 def upload_sample():
     api = HfApi()
-    repo_id = "scthornton/aegis-demo-dataset"
+    repo_id = "scthornton/trylock-demo-dataset"
 
     print(f"Creating repository: {repo_id}")
 
@@ -31,12 +31,12 @@ def upload_sample():
 
     # Upload the sample data
     api.upload_file(
-        path_or_fileobj=str(sample_dir / "aegis_sample.jsonl"),
-        path_in_repo="aegis_sample.jsonl",
+        path_or_fileobj=str(sample_dir / "trylock_sample.jsonl"),
+        path_in_repo="trylock_sample.jsonl",
         repo_id=repo_id,
         repo_type="dataset",
     )
-    print("  ✅ aegis_sample.jsonl")
+    print("  ✅ trylock_sample.jsonl")
 
     # Upload README
     api.upload_file(

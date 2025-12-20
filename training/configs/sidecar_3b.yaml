@@ -1,0 +1,58 @@
+# TRYLOCK Sidecar Classifier Configuration
+# Llama 3.2 3B - lightweight model for parallel classification
+
+sidecar:
+  # Model configuration - smaller model for inference efficiency
+  model_name: "meta-llama/Llama-3.2-3B-Instruct"
+  model_type: "sequence_classification"  # Options: sequence_classification, causal_lm
+  trust_remote_code: true
+
+  # Classification settings
+  num_labels: 3
+  label_names:
+    - "SAFE"
+    - "WARN"
+    - "ATTACK"
+  problem_type: "single_label"
+
+  # LoRA configuration - lighter for smaller model
+  use_lora: true
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  lora_target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+
+  # Training hyperparameters
+  learning_rate: 2.0e-5
+  num_epochs: 3
+  per_device_batch_size: 8
+  gradient_accumulation_steps: 2  # Effective batch size: 16
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_seq_length: 2048  # Shorter for efficiency
+
+  # Data configuration
+  train_file: "data/tier1_open/attacks/train.jsonl"
+  eval_file: "data/tier1_open/attacks/eval.jsonl"
+  max_samples: null
+
+  # Class balancing
+  use_class_weights: true
+  oversample_minority: false
+
+  # Classification thresholds
+  warn_threshold: 0.3   # Risk score above this → WARN
+  attack_threshold: 0.7 # Risk score above this → ATTACK
+
+  # Output configuration
+  output_dir: "./outputs/trylock-sidecar-3b"
+  save_steps: 500
+  logging_steps: 10
+
+  # Hardware configuration
+  bf16: true
+  gradient_checkpointing: true

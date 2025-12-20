@@ -1,0 +1,46 @@
+# TRYLOCK SFT Warmup Configuration
+# Llama 3.1 8B Instruct with LoRA
+
+sft:
+  # Model configuration
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  trust_remote_code: true
+
+  # LoRA configuration
+  use_lora: true
+  lora_r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  lora_target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+
+  # Training hyperparameters
+  learning_rate: 2.0e-5
+  num_epochs: 2
+  per_device_batch_size: 4
+  gradient_accumulation_steps: 4  # Effective batch size: 16
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_seq_length: 4096
+
+  # Data configuration
+  train_file: "data/tier1_open/attacks/train.jsonl"
+  eval_file: "data/tier1_open/attacks/eval.jsonl"
+  max_samples: null  # Use all available data
+
+  # Training mix ratios (should sum to 1.0)
+  attack_ratio: 0.40      # Ideal responses to attacks
+  benign_ratio: 0.35      # Responses to benign hard negatives
+  capability_ratio: 0.25  # General helpfulness preservation
+
+  # Output configuration
+  output_dir: "./outputs/trylock-sft-llama3-8b"
+  save_steps: 500
+  logging_steps: 10
+
+  # Hardware configuration
+  bf16: true
+  gradient_checkpointing: true

@@ -1,0 +1,63 @@
+# TRYLOCK DPO Preference Training Configuration
+# Llama 3.1 8B Instruct with LoRA + Curriculum Learning
+
+dpo:
+  # Model configuration
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  sft_checkpoint: "./outputs/trylock-sft-llama3-8b"
+  trust_remote_code: true
+
+  # LoRA configuration
+  use_lora: true
+  lora_r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  lora_target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+
+  # DPO-specific parameters
+  beta: 0.1                 # KL penalty coefficient
+  loss_type: "sigmoid"      # Options: sigmoid, hinge, ipo, kto_pair
+  label_smoothing: 0.0
+  reference_free: false     # Keep reference model for KL
+
+  # Training hyperparameters
+  learning_rate: 5.0e-6     # Lower than SFT for stability
+  num_epochs: 1
+  per_device_batch_size: 2
+  gradient_accumulation_steps: 8  # Effective batch size: 16
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_seq_length: 4096
+  max_prompt_length: 2048
+
+  # Data configuration
+  train_file: "data/tier1_open/attacks/train.jsonl"
+  eval_file: "data/tier1_open/attacks/eval.jsonl"
+  max_samples: null
+
+  # Preference pair strategy
+  # These control the ratio of different rejection types
+  unsafe_weight: 0.60       # Weight for (chosen, rejected_unsafe) pairs
+  overblock_weight: 0.40    # Weight for (chosen, rejected_overblock) pairs
+
+  # Curriculum learning configuration
+  use_curriculum: true
+  curriculum_schedule:
+    - "easy"
+    - "medium"
+    - "hard"
+    - "expert"
+  curriculum_epochs_per_stage: 1
+
+  # Output configuration
+  output_dir: "./outputs/trylock-dpo-llama3-8b"
+  save_steps: 500
+  logging_steps: 10
+
+  # Hardware configuration
+  bf16: true
+  gradient_checkpointing: true

@@ -1,0 +1,392 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://trylock.perfexion.ai/schemas/trajectory/v2.0",
+  "title": "TRYLOCK Trajectory",
+  "description": "A multi-turn conversation trajectory with attack labels for TRYLOCK v2.0 dataset",
+  "type": "object",
+  "required": ["id", "version", "attack_metadata", "conversation", "responses"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^trylock-(mt|st|ind|bn|ta)-[0-9]{5}$",
+      "description": "Unique identifier. Prefixes: mt=multi-turn, st=single-turn, ind=indirect, bn=benign, ta=tool-agent"
+    },
+    "version": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema version"
+    },
+    "attack_metadata": {
+      "type": "object",
+      "required": ["family", "type", "difficulty", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string",
+          "enum": [
+            "direct_injection",
+            "indirect_injection",
+            "multi_turn_manipulation",
+            "obfuscation_wrappers",
+            "tool_agent_abuse",
+            "benign"
+          ],
+          "description": "Primary attack family classification"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Specific attack type within the family"
+        },
+        "wrappers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "paraphrase_semantic",
+              "translation_roundtrip",
+              "encoding_schemes",
+              "adversarial_poetry",
+              "roleplay_fiction",
+              "code_comments",
+              "payload_splitting"
+            ]
+          },
+          "default": [],
+          "description": "Obfuscation techniques applied"
+        },
+        "manipulation_tactics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Social engineering tactics used"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard", "expert"],
+          "description": "Detection difficulty level"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "synthetic_redblue",
+            "public_benchmark",
+            "manual_craft",
+            "mutation",
+            "enterprise_derived"
+          ],
+          "description": "Origin of this trajectory"
+        },
+        "academic_benchmark_alignment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Academic benchmarks this aligns with"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about this trajectory"
+        }
+      }
+    },
+    "conversation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["turn", "role", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "turn": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-indexed turn number"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant", "system", "tool"],
+            "description": "Message role"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Message content"
+          },
+          "turn_labels": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "attack_stage": {
+                "type": "string",
+                "enum": [
+                  "reconnaissance",
+                  "setup",
+                  "probe",
+                  "pivot",
+                  "payload",
+                  "recovery",
+                  "extraction",
+                  "none"
+                ],
+                "default": "none",
+                "description": "Attack lifecycle stage"
+              },
+              "attack_intent_score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 0,
+                "description": "0=benign, 1=suspicious, 2=likely attack, 3=definite attack"
+              },
+              "manipulation_tactics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [],
+                "description": "Manipulation tactics in this turn"
+              },
+              "expected_action": {
+                "type": "string",
+                "enum": [
+                  "continue",
+                  "warn",
+                  "ask_clarify",
+                  "soft_decline",
+                  "hard_decline",
+                  "sandbox_tools"
+                ],
+                "default": "continue",
+                "description": "Recommended model action"
+              }
+            },
+            "description": "Turn-level attack labels (for user turns)"
+          },
+          "is_pivot_point": {
+            "type": "boolean",
+            "default": false,
+            "description": "True if this is the key transition turn"
+          },
+          "response_type": {
+            "type": "string",
+            "enum": [
+              "engaged",
+              "engaged_with_context",
+              "clarification_request",
+              "partial_with_sanitization",
+              "soft_decline",
+              "soft_decline_with_redirect",
+              "hard_decline"
+            ],
+            "description": "Type of assistant response (for assistant turns)"
+          },
+          "tool_call": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Tool/function name"
+              },
+              "arguments": {
+                "type": "object",
+                "description": "Tool call arguments"
+              }
+            },
+            "description": "Tool call details (for tool turns)"
+          },
+          "tool_result": {
+            "type": "object",
+            "properties": {
+              "output": {
+                "type": "string",
+                "description": "Tool execution output"
+              },
+              "is_poisoned": {
+                "type": "boolean",
+                "description": "Whether this output contains injection"
+              }
+            },
+            "description": "Tool result details (for tool turns)"
+          }
+        }
+      },
+      "description": "The conversation turns"
+    },
+    "pivot_turn_index": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "1-indexed turn number of the pivot point (null for benign)"
+    },
+    "activation_capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether activations were captured"
+        },
+        "target_layers": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "default": [12, 14, 16, 18, 20],
+          "description": "Model layers for activation capture"
+        },
+        "capture_path": {
+          "type": "string",
+          "description": "Path to saved activations file"
+        },
+        "model_name": {
+          "type": "string",
+          "description": "Model used for capture"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Notes about activation capture"
+        }
+      },
+      "description": "Activation capture metadata for RepE training"
+    },
+    "responses": {
+      "type": "object",
+      "required": ["chosen"],
+      "additionalProperties": false,
+      "properties": {
+        "chosen": {
+          "type": "object",
+          "required": ["content", "response_type"],
+          "additionalProperties": false,
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The ideal response content"
+            },
+            "response_type": {
+              "type": "string",
+              "enum": [
+                "engaged",
+                "engaged_with_context",
+                "clarification_request",
+                "partial_with_sanitization",
+                "soft_decline",
+                "soft_decline_with_redirect",
+                "hard_decline"
+              ],
+              "description": "Classification of this response"
+            },
+            "security_reasoning": {
+              "type": "string",
+              "description": "Brief explanation of why this response is appropriate"
+            }
+          },
+          "description": "The ideal (chosen) response for DPO"
+        },
+        "rejected_unsafe": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A harmfully compliant response"
+            },
+            "failure_mode": {
+              "type": "string",
+              "description": "What security failure this demonstrates"
+            }
+          },
+          "description": "A response that unsafely complies (for attack trajectories)"
+        },
+        "rejected_overblock": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "An overly restrictive response"
+            },
+            "failure_mode": {
+              "type": "string",
+              "description": "What over-refusal failure this demonstrates"
+            }
+          },
+          "description": "A response that inappropriately refuses"
+        }
+      },
+      "description": "Response options for preference learning"
+    },
+    "eval_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secalign_category": {
+          "type": ["string", "null"],
+          "description": "SecAlign benchmark category alignment"
+        },
+        "mtj_bench_pattern": {
+          "type": ["string", "null"],
+          "description": "MTJ-Bench pattern alignment"
+        },
+        "poisonedrag_vector": {
+          "type": ["string", "null"],
+          "description": "PoisonedRAG attack vector alignment"
+        },
+        "adversarial_poetry_variant": {
+          "type": ["string", "null"],
+          "description": "Adversarial poetry variant"
+        },
+        "custom_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Custom evaluation tags"
+        }
+      },
+      "description": "Evaluation benchmark alignment metadata"
+    },
+    "generation_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generator_model": {
+          "type": "string",
+          "description": "Model used for generation"
+        },
+        "judge_model": {
+          "type": "string",
+          "description": "Model used for judging"
+        },
+        "generation_timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this was generated"
+        },
+        "mutation_parent_id": {
+          "type": "string",
+          "description": "Parent trajectory ID if this is a mutation"
+        },
+        "mutation_type": {
+          "type": "string",
+          "description": "Type of mutation applied"
+        },
+        "quality_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Quality assessment score"
+        }
+      },
+      "description": "Metadata about how this trajectory was generated"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "warn_threshold": 0.3,
+  "attack_threshold": 0.7,
+  "label_names": [
+    "SAFE",
+    "WARN",
+    "ATTACK"
+  ]
+}

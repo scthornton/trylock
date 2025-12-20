@@ -1,10 +1,10 @@
-# AEGIS Comparison to Prior Art
+# TRYLOCK Comparison to Prior Art
 
 ## Defense Systems Comparison
 
 | System | Organization | Method | Layers | Dynamic | Open Source | ASR Reduction |
 |--------|--------------|--------|--------|---------|-------------|---------------|
-| **AEGIS** | perfecXion.ai | DPO + RepE + Classifier | 3 | ✅ Yes | ✅ Yes | **86%** |
+| **TRYLOCK** | perfecXion.ai | DPO + RepE + Classifier | 3 | ✅ Yes | ✅ Yes | **86%** |
 | Llama Guard | Meta | External Classifier | 1 | ❌ No | ✅ Yes | ~40-50%* |
 | NeMo Guardrails | NVIDIA | Rule-based + LLM | 1 | Partial | ✅ Yes | ~30-40%* |
 | Constitutional AI | Anthropic | RLHF Training | 1 | ❌ No | ❌ No | ~50-60%* |
@@ -23,7 +23,7 @@
 | **External Classifiers** | Input/output filtering | No model changes needed | Latency overhead, false positives |
 | **Rule-based Systems** | Pattern matching | Interpretable | Easy to circumvent |
 
-### AEGIS Multi-Layer Approach
+### TRYLOCK Multi-Layer Approach
 
 | Layer | Name | Mechanism | What It Catches |
 |-------|------|-----------|-----------------|
@@ -33,7 +33,7 @@
 
 ## Technical Specifications
 
-### AEGIS Components
+### TRYLOCK Components
 
 | Component | Base Model | Size | Method | Inference Overhead |
 |-----------|------------|------|--------|-------------------|
@@ -51,7 +51,7 @@
 
 ## Feature Comparison
 
-| Feature | AEGIS | Llama Guard | NeMo Guardrails |
+| Feature | TRYLOCK | Llama Guard | NeMo Guardrails |
 |---------|-------|-------------|-----------------|
 | Weight-level protection | ✅ | ❌ | ❌ |
 | Activation-space defense | ✅ | ❌ | ❌ |
@@ -63,22 +63,22 @@
 | Custom categories | ✅ | ❌ | ✅ |
 | Base model agnostic | ❌* | ✅ | ✅ |
 
-*AEGIS components are model-specific (Mistral-7B). Porting to other models requires retraining.
+*TRYLOCK components are model-specific (Mistral-7B). Porting to other models requires retraining.
 
 ## Evaluation Results Summary
 
-### AEGIS on Internal Benchmark (299 samples)
+### TRYLOCK on Internal Benchmark (299 samples)
 
 | Configuration | ASR | Reduction |
 |---------------|-----|-----------|
 | Baseline (Mistral-7B) | 58% | - |
 | + Layer 1 (DPO) | 47% | 19% |
 | + Layer 2 (RepE α=2.0) | 10% | 83% |
-| Full AEGIS (adaptive α) | 8% | 86% |
+| Full TRYLOCK (adaptive α) | 8% | 86% |
 
 ### Comparison Notes
 
-**Why AEGIS Outperforms Single-Layer Defenses:**
+**Why TRYLOCK Outperforms Single-Layer Defenses:**
 
 1. **Complementary Mechanisms**: Each layer catches different attack patterns
    - DPO: Attacks similar to training data
@@ -91,25 +91,25 @@
 
 **Limitations vs. Llama Guard:**
 
-1. AEGIS is model-specific; Llama Guard works with any model
-2. Llama Guard provides output classification; AEGIS focuses on input defense
-3. Llama Guard has multi-language support; AEGIS is English-only
+1. TRYLOCK is model-specific; Llama Guard works with any model
+2. Llama Guard provides output classification; TRYLOCK focuses on input defense
+3. Llama Guard has multi-language support; TRYLOCK is English-only
 
 ## Recommended Use Cases
 
 | Use Case | Best Choice | Reason |
 |----------|-------------|--------|
-| Maximum jailbreak resistance | AEGIS | 86% ASR reduction |
+| Maximum jailbreak resistance | TRYLOCK | 86% ASR reduction |
 | Model-agnostic deployment | Llama Guard | Works with any LLM |
 | Complex rule requirements | NeMo Guardrails | Programmable policies |
-| Low-latency applications | AEGIS (no sidecar) | Minimal overhead |
+| Low-latency applications | TRYLOCK (no sidecar) | Minimal overhead |
 | Multi-language support | Llama Guard 3 | 8 language support |
 
 ## Citation
 
 ```bibtex
-@misc{aegis2024,
-  title={AEGIS: Defense-in-Depth Against LLM Jailbreaks via Layered Preference and Representation Engineering},
+@misc{trylock2024,
+  title={TRYLOCK: Defense-in-Depth Against LLM Jailbreaks via Layered Preference and Representation Engineering},
   author={Thornton, Scott},
   year={2024},
   organization={perfecXion.ai},

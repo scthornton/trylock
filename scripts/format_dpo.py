@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert AEGIS trajectories to DPO training format.
+Convert TRYLOCK trajectories to DPO training format.
 
 Creates:
 - data/dpo/train.jsonl (80%)
@@ -143,7 +143,7 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("=" * 60)
-    print("AEGIS DPO FORMAT CONVERSION")
+    print("TRYLOCK DPO FORMAT CONVERSION")
     print("=" * 60)
 
     # Load trajectories
@@ -184,7 +184,7 @@ def main():
         print(f"   Saved {filepath}")
 
     # Also save a combined version for HuggingFace
-    combined_path = output_dir / "aegis_dpo_full.jsonl"
+    combined_path = output_dir / "trylock_dpo_full.jsonl"
     with open(combined_path, 'w') as f:
         for item in dpo_data:
             f.write(json.dumps(item) + '\n')

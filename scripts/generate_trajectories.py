@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Production Trajectory Generator
+TRYLOCK Production Trajectory Generator
 
 Generates attack trajectories using Claude API with judge filtering.
 
@@ -320,7 +320,7 @@ class TrajectoryGenerator:
 
             # Build trajectory dict
             trajectory = {
-                "id": f"aegis-{category[:2]}-{int(time.time()*1000)}",
+                "id": f"trylock-{category[:2]}-{int(time.time()*1000)}",
                 "version": "2.0",
                 "attack_metadata": {
                     "family": category,
@@ -446,7 +446,7 @@ class TrajectoryGenerator:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate AEGIS attack trajectories")
+    parser = argparse.ArgumentParser(description="Generate TRYLOCK attack trajectories")
     parser.add_argument("--target", type=int, default=500, help="Target count per category")
     parser.add_argument("--category", type=str, help="Single category to generate")
     parser.add_argument("--all-categories", action="store_true", help="Generate all categories")
@@ -480,7 +480,7 @@ def main():
             parser.error("ANTHROPIC_API_KEY required for judge bot")
 
     print("=" * 60)
-    print("AEGIS Trajectory Generator")
+    print("TRYLOCK Trajectory Generator")
     print("=" * 60)
     print(f"Target: {args.target} per category")
     print(f"Categories: {categories}")

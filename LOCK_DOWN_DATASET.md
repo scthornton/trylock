@@ -1,9 +1,9 @@
-# Locking Down AEGIS Dataset
+# Locking Down TRYLOCK Dataset
 
 ## Immediate Action Required
 
 Your training data is currently **PUBLIC** at:
-- https://huggingface.co/datasets/scthornton/aegis-dataset
+- https://huggingface.co/datasets/scthornton/trylock-dataset
 
 **6 people have already downloaded it.**
 
@@ -12,7 +12,7 @@ Your training data is currently **PUBLIC** at:
 ## Step 1: Make Dataset Private (URGENT)
 
 ### Option A: Via Web Interface (Fastest)
-1. Go to: https://huggingface.co/datasets/scthornton/aegis-dataset/settings
+1. Go to: https://huggingface.co/datasets/scthornton/trylock-dataset/settings
 2. Scroll to "Danger Zone"
 3. Click "Change visibility"
 4. Select "Private"
@@ -25,7 +25,7 @@ python -c "
 from huggingface_hub import HfApi
 api = HfApi()
 api.update_repo_visibility(
-    repo_id='scthornton/aegis-dataset',
+    repo_id='scthornton/trylock-dataset',
     private=True,
     repo_type='dataset'
 )
@@ -39,7 +39,7 @@ print('✓ Dataset is now private')
 
 Your model READMEs might reference the public dataset. Update these repos:
 
-### aegis-mistral-7b-dpo
+### trylock-mistral-7b-dpo
 **Current:** Might link to public dataset
 **Update to:**
 ```markdown
@@ -59,23 +59,23 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 base = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3")
-model = PeftModel.from_pretrained(base, "scthornton/aegis-mistral-7b-dpo")
-tokenizer = AutoTokenizer.from_pretrained("scthornton/aegis-mistral-7b-dpo")
+model = PeftModel.from_pretrained(base, "scthornton/trylock-mistral-7b-dpo")
+tokenizer = AutoTokenizer.from_pretrained("scthornton/trylock-mistral-7b-dpo")
 ```
 
 ## Citation
 
-If you use this model, please cite the AEGIS paper:
+If you use this model, please cite the TRYLOCK paper:
 ```
-@article{thornton2025aegis,
-  title={AEGIS: Adaptive LLM Jailbreak Defense via Layered Security Architecture},
+@article{thornton2025trylock,
+  title={TRYLOCK: Adaptive LLM Jailbreak Defense via Layered Security Architecture},
   author={Thornton, Scott},
   year={2025}
 }
 ```
 ```
 
-### aegis-repe-vectors
+### trylock-repe-vectors
 **Update to:**
 ```markdown
 ## RepE Steering Vectors
@@ -93,14 +93,14 @@ from safetensors.torch import load_file
 from huggingface_hub import hf_hub_download
 
 vectors_path = hf_hub_download(
-    repo_id="scthornton/aegis-repe-vectors",
+    repo_id="scthornton/trylock-repe-vectors",
     filename="steering_vectors.safetensors",
 )
 vectors = load_file(vectors_path)
 ```
 ```
 
-### aegis-sidecar-classifier
+### trylock-sidecar-classifier
 **Update to:**
 ```markdown
 ## Threat Classification Sidecar
@@ -117,9 +117,9 @@ vectors = load_file(vectors_path)
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 model = AutoModelForSequenceClassification.from_pretrained(
-    "scthornton/aegis-sidecar-classifier"
+    "scthornton/trylock-sidecar-classifier"
 )
-tokenizer = AutoTokenizer.from_pretrained("scthornton/aegis-sidecar-classifier")
+tokenizer = AutoTokenizer.from_pretrained("scthornton/trylock-sidecar-classifier")
 ```
 ```
 
@@ -127,7 +127,7 @@ tokenizer = AutoTokenizer.from_pretrained("scthornton/aegis-sidecar-classifier")
 
 ## Step 3: Update Paper References
 
-In `paper/AEGIS_Canonical.md`, ensure you specify:
+In `paper/TRYLOCK_Canonical.md`, ensure you specify:
 
 **Section 4.1 - Dataset** (already correct):
 ```markdown
@@ -187,8 +187,8 @@ upon reasonable request for academic research purposes.
 - ❌ Proprietary prompt engineering
 
 Your models are **fully usable** without the training data. Researchers can:
-- Use AEGIS for defense
-- Compare against AEGIS benchmarks
+- Use TRYLOCK for defense
+- Compare against TRYLOCK benchmarks
 - Cite your paper
 - Build on your architecture
 
@@ -204,10 +204,10 @@ This is the **perfect balance** for academic publication + IP protection.
 ## Quick Action Checklist
 
 ```bash
-☐ Make aegis-dataset private (URGENT)
-☐ Update aegis-mistral-7b-dpo README
-☐ Update aegis-repe-vectors README
-☐ Update aegis-sidecar-classifier README
+☐ Make trylock-dataset private (URGENT)
+☐ Update trylock-mistral-7b-dpo README
+☐ Update trylock-repe-vectors README
+☐ Update trylock-sidecar-classifier README
 ☐ Add data availability statement to paper
 ☐ Remove any public links to training data
 ☐ Keep models public (they're fine!)
@@ -246,7 +246,7 @@ If reviewers request access to reproduce results:
 - ✅ Full training data is PRIVATE
 - ✅ Models remain PUBLIC
 - ✅ Paper describes methodology
-- ✅ Researchers can use AEGIS without data
+- ✅ Researchers can use TRYLOCK without data
 - ✅ IP protected while maintaining scientific value
 
 The models themselves don't leak training data - they're safe to keep public!

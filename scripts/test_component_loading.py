@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test each AEGIS component individually to find what causes segfault.
+Test each TRYLOCK component individually to find what causes segfault.
 """
 
 import os
@@ -42,14 +42,14 @@ try:
     test_step(4, "Load DPO adapter")
     dpo_model = PeftModel.from_pretrained(
         base_model,
-        "scthornton/aegis-mistral-7b-dpo",
+        "scthornton/trylock-mistral-7b-dpo",
         device_map={"": "cpu"},
     )
     print(f"✓ DPO adapter loaded")
 
     test_step(5, "Load RepE vectors")
     repe_path = hf_hub_download(
-        repo_id="scthornton/aegis-repe-vectors",
+        repo_id="scthornton/trylock-repe-vectors",
         filename="steering_vectors.safetensors",
         repo_type="model"
     )
@@ -57,9 +57,9 @@ try:
     print(f"✓ RepE vectors loaded ({len(vectors)} vectors)")
 
     test_step(6, "Load sidecar classifier")
-    sidecar_tokenizer = AutoTokenizer.from_pretrained("scthornton/aegis-sidecar-classifier")
+    sidecar_tokenizer = AutoTokenizer.from_pretrained("scthornton/trylock-sidecar-classifier")
     sidecar_model = AutoModelForSequenceClassification.from_pretrained(
-        "scthornton/aegis-sidecar-classifier",
+        "scthornton/trylock-sidecar-classifier",
         torch_dtype=torch.float32,
         device_map={"": "cpu"},
     )

@@ -20,9 +20,9 @@ I've created a wrapper that sets the correct environment variables:
 ```bash
 ./scripts/run_eval.sh \
     --test-file data/dpo/test.jsonl \
-    --dpo-adapter scthornton/aegis-mistral-7b-dpo \
+    --dpo-adapter scthornton/trylock-mistral-7b-dpo \
     --repe-vectors ./path/to/steering_vectors.safetensors \
-    --sidecar scthornton/aegis-sidecar-classifier \
+    --sidecar scthornton/trylock-sidecar-classifier \
     --max-samples 10 \
     --output eval_results.json
 ```
@@ -46,9 +46,9 @@ Then retry:
 ```bash
 python scripts/eval_cpu_only.py \
     --test-file data/dpo/test.jsonl \
-    --dpo-adapter scthornton/aegis-mistral-7b-dpo \
+    --dpo-adapter scthornton/trylock-mistral-7b-dpo \
     --repe-vectors ./path/to/steering_vectors.safetensors \
-    --sidecar scthornton/aegis-sidecar-classifier \
+    --sidecar scthornton/trylock-sidecar-classifier \
     --max-samples 10
 ```
 
@@ -100,7 +100,7 @@ When evaluation runs successfully, you should see:
 
 ```
 ==========================================
-AEGIS Evaluation (CPU Mode)
+TRYLOCK Evaluation (CPU Mode)
 ==========================================
 
 Environment:

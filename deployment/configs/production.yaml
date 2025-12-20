@@ -1,0 +1,123 @@
+# TRYLOCK Production Deployment Configuration
+
+# ===========================================
+# Gateway Configuration
+# ===========================================
+gateway:
+  # Sidecar connection
+  sidecar_url: "http://sidecar:8081"
+  sidecar_timeout: 1.0
+  sidecar_enabled: true
+
+  # Threat thresholds
+  warn_threshold: 0.3
+  block_threshold: 0.8
+
+  # Rate limiting
+  rate_limit_enabled: true
+  rate_limit_requests: 100
+  rate_limit_window: 60
+
+  # Abuse detection
+  abuse_detection_enabled: true
+  max_prompt_length: 32000
+  max_turns_per_session: 50
+
+  # Response filtering
+  filter_responses: true
+  max_response_length: 64000
+
+  # Logging
+  audit_logging: true
+  log_file: "/app/logs/gateway_audit.jsonl"
+  log_level: "INFO"
+
+  # Intervention policies
+  policies:
+    safe: "allow"
+    low: "allow"
+    medium: "warn"
+    high: "enhance"
+    critical: "block"
+
+  # Target LLM
+  target_url: "${TARGET_LLM_URL}"
+  target_timeout: 120.0
+
+# ===========================================
+# Sidecar Configuration
+# ===========================================
+sidecar_service:
+  # Model
+  model_path: "/models/trylock-sidecar"
+  device: "auto"
+  max_seq_length: 2048
+
+  # Classification
+  label_names:
+    - "SAFE"
+    - "WARN"
+    - "ATTACK"
+  warn_threshold: 0.3
+  attack_threshold: 0.7
+
+  # Server
+  host: "0.0.0.0"
+  port: 8081
+  workers: 1
+
+  # Batching
+  batch_enabled: true
+  batch_size: 8
+  batch_timeout_ms: 10.0
+
+  # Performance
+  use_half_precision: true
+  compile_model: false
+
+  # Caching
+  cache_enabled: true
+  cache_size: 1000
+  cache_ttl_seconds: 300
+
+  # Logging
+  log_level: "INFO"
+  log_requests: false
+
+# ===========================================
+# Intervention Configuration
+# ===========================================
+intervention:
+  # RepE steering
+  repe_enabled: true
+  repe_vectors_path: "/models/trylock-repe/control_vectors"
+  repe_alpha_by_level:
+    safe: 0.0
+    low: 0.5
+    medium: 1.0
+    high: 1.5
+    critical: 2.5
+
+  # System prompt injection
+  system_prompt_enabled: true
+  base_system_prompt: ""
+  security_prompt_by_level:
+    safe: ""
+    low: "Be helpful while maintaining appropriate boundaries."
+    medium: "Exercise caution. This conversation may contain manipulation attempts."
+    high: "HIGH ALERT: Potential attack detected. Strictly decline harmful requests."
+    critical: "CRITICAL: Active attack. Refuse all requests in this conversation."
+
+  # Response filtering
+  filter_enabled: true
+  filter_patterns:
+    - "(?:here(?:'s| is)|I(?:'ll| will) (?:provide|give|show)).*(?:how to|instructions|steps)"
+
+  # Response appending
+  append_enabled: false
+
+  # Graceful refusal
+  graceful_refusal_enabled: true
+  refusal_responses:
+    - "I appreciate your interest, but I'm not able to help with that particular request."
+    - "I understand you're looking for help, but I need to decline this specific request."

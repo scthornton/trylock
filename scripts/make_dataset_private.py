@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Make the AEGIS dataset private to protect intellectual property.
+Make the TRYLOCK dataset private to protect intellectual property.
 """
 
 from huggingface_hub import HfApi
@@ -8,11 +8,11 @@ from huggingface_hub import HfApi
 def make_private():
     api = HfApi()
 
-    print("Making aegis-dataset private...")
+    print("Making trylock-dataset private...")
 
     try:
         api.update_repo_visibility(
-            repo_id='scthornton/aegis-dataset',
+            repo_id='scthornton/trylock-dataset',
             private=True,
             repo_type='dataset'
         )
@@ -20,7 +20,7 @@ def make_private():
         print("\nVerifying...")
 
         # Verify it's private
-        info = api.dataset_info('scthornton/aegis-dataset')
+        info = api.dataset_info('scthornton/trylock-dataset')
         if info.private:
             print("✅ Confirmed: Dataset is private")
         else:
@@ -29,7 +29,7 @@ def make_private():
     except Exception as e:
         print(f"❌ Error: {e}")
         print("\nPlease make it private manually:")
-        print("1. Go to: https://huggingface.co/datasets/scthornton/aegis-dataset/settings")
+        print("1. Go to: https://huggingface.co/datasets/scthornton/trylock-dataset/settings")
         print("2. Scroll to 'Danger Zone'")
         print("3. Click 'Change visibility'")
         print("4. Select 'Private'")

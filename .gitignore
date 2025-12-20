@@ -51,7 +51,7 @@ outputs/
 generation_output.log
 
 # Private Training Data (DO NOT COMMIT)
-data/dpo/aegis_dpo_full.jsonl
+data/dpo/trylock_dpo_full.jsonl
 data/dpo/train.jsonl
 data/dpo/val.jsonl
 data/dpo/test.jsonl

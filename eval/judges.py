@@ -173,7 +173,7 @@ Respond in JSON format:
 
     def __init__(
         self,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = "claude-3-5-sonnet-20241022",
         temperature: float = 0.0,
         max_retries: int = 3,
     ):

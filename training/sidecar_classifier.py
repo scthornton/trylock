@@ -675,6 +675,184 @@ class SidecarInference:
         return results
 
 
+class HighRiskGuard:
+    """
+    Guard layer that overrides sidecar SAFE classification for high-risk prompts.
+
+    Addresses the failure mode where sidecar misclassifies attacks as SAFE
+    by checking for high-risk features that should floor alpha to minimum WARN level.
+
+    This runs AFTER sidecar classification and can upgrade (but not downgrade) risk.
+    """
+
+    # Patterns that indicate high risk even if sidecar says SAFE
+    HIGH_RISK_PATTERNS = [
+        # Encoding artifacts
+        r'[A-Za-z0-9+/]{40,}={0,2}',  # Base64
+        r'\\x[0-9a-fA-F]{2}',  # Hex escapes
+        r'\\u[0-9a-fA-F]{4}',  # Unicode escapes
+        r'%[0-9a-fA-F]{2}',  # URL encoding
+
+        # Refusal evasion templates
+        r'ignore previous',
+        r'ignore all previous',
+        r'disregard instructions',
+        r'forget your training',
+        r'pretend you are',
+        r'act as if you',
+        r'you are now',
+        r'new persona',
+        r'developer mode',
+        r'jailbreak',
+
+        # Roleplay indicators with harm potential
+        r'evil (ai|assistant|bot)',
+        r'no ethical',
+        r'no moral',
+        r'without restrictions',
+        r'uncensored',
+
+        # System prompt extraction
+        r'repeat.*system prompt',
+        r'show.*system (message|prompt)',
+        r'what are your instructions',
+        r'reveal.*prompt',
+    ]
+
+    def __init__(
+        self,
+        min_alpha_on_high_risk: float = 1.5,
+        enable_homoglyph_check: bool = True,
+    ):
+        import re
+        self.min_alpha = min_alpha_on_high_risk
+        self.enable_homoglyph = enable_homoglyph_check
+        self.patterns = [re.compile(p, re.IGNORECASE) for p in self.HIGH_RISK_PATTERNS]
+
+        # Common homoglyph characters (non-ASCII that look like ASCII)
+        self.homoglyph_chars = set([
+            '\u0430', '\u0435', '\u043e', '\u0440', '\u0441',  # Cyrillic
+            '\u03b1', '\u03b5', '\u03b9', '\u03bf', '\u03c1',  # Greek
+            '\u200b', '\u200c', '\u200d', '\ufeff',  # Zero-width
+        ])
+
+    def check_high_risk(self, text: str) -> tuple[bool, list[str]]:
+        """
+        Check if text contains high-risk features.
+
+        Returns:
+            Tuple of (is_high_risk, list_of_reasons)
+        """
+        reasons = []
+
+        # Check regex patterns
+        for pattern in self.patterns:
+            if pattern.search(text):
+                reasons.append(f"pattern:{pattern.pattern[:30]}...")
+
+        # Check for homoglyphs
+        if self.enable_homoglyph:
+            homoglyph_count = sum(1 for c in text if c in self.homoglyph_chars)
+            if homoglyph_count >= 3:
+                reasons.append(f"homoglyphs:{homoglyph_count}")
+
+        # Check for mixed scripts (potential obfuscation)
+        import unicodedata
+        scripts = set()
+        for char in text:
+            try:
+                name = unicodedata.name(char, '')
+                if 'CYRILLIC' in name:
+                    scripts.add('cyrillic')
+                elif 'GREEK' in name and 'LETTER' in name:
+                    scripts.add('greek')
+                elif 'LATIN' in name:
+                    scripts.add('latin')
+            except ValueError:
+                pass
+
+        if len(scripts) > 1:
+            reasons.append(f"mixed_scripts:{scripts}")
+
+        return len(reasons) > 0, reasons
+
+    def apply_guard(
+        self,
+        text: str,
+        sidecar_classification: str,
+        sidecar_alpha: float,
+    ) -> tuple[str, float, list[str]]:
+        """
+        Apply guard to potentially upgrade classification.
+
+        Args:
+            text: Input text
+            sidecar_classification: Original sidecar classification (SAFE/WARN/ATTACK)
+            sidecar_alpha: Original alpha from sidecar
+
+        Returns:
+            Tuple of (final_classification, final_alpha, guard_reasons)
+        """
+        is_high_risk, reasons = self.check_high_risk(text)
+
+        if is_high_risk and sidecar_classification == "SAFE":
+            # Upgrade SAFE to WARN
+            return "WARN", max(sidecar_alpha, self.min_alpha), reasons
+        elif is_high_risk and sidecar_alpha < self.min_alpha:
+            # Floor alpha to minimum
+            return sidecar_classification, self.min_alpha, reasons
+        else:
+            # No change
+            return sidecar_classification, sidecar_alpha, []
+
+
+def apply_sidecar_with_guard(
+    inference: SidecarInference,
+    text: str,
+    guard: HighRiskGuard | None = None,
+    alpha_map: dict | None = None,
+) -> dict:
+    """
+    Classify with sidecar, then apply high-risk guard.
+
+    This is the recommended way to use the sidecar in production,
+    as it addresses the SAFE misclassification failure mode.
+
+    Args:
+        inference: SidecarInference instance
+        text: Input text to classify
+        guard: Optional HighRiskGuard (created if None)
+        alpha_map: Optional alpha mapping for classifications
+
+    Returns:
+        Classification result with guard annotations
+    """
+    if alpha_map is None:
+        alpha_map = {"SAFE": 0.5, "WARN": 1.5, "ATTACK": 2.5}
+
+    if guard is None:
+        guard = HighRiskGuard()
+
+    # Get sidecar classification
+    result = inference.classify(text)
+    original_class = result["classification"]
+    original_alpha = alpha_map.get(original_class, 1.5)
+
+    # Apply guard
+    final_class, final_alpha, guard_reasons = guard.apply_guard(
+        text, original_class, original_alpha
+    )
+
+    result["original_classification"] = original_class
+    result["original_alpha"] = original_alpha
+    result["classification"] = final_class
+    result["alpha"] = final_alpha
+    result["guard_applied"] = len(guard_reasons) > 0
+    result["guard_reasons"] = guard_reasons
+
+    return result
+
+
 def evaluate_sidecar(
     model_path: str,
     test_file: str,

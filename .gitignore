@@ -92,3 +92,38 @@ temp/
 # Experiment outputs
 wandb/
 mlruns/
+
+# Internal documentation (not for public repo)
+DELETE_OLD_AEGIS_REPOS.md
+MIGRATION_COMPLETE.md
+HUGGINGFACE_MIGRATION_PLAN.md
+DEPLOYMENT_OFFICIAL.md
+REBRAND_COMPLETE.md
+PAPER_FIXES_COMPLETE.md
+PAPER_POLISH_CHECKLIST.md
+TRYLOCK_Claude_Code_Prompt.md
+SEGFAULT_FIX.md
+RUN_EVALUATION_NOW.md
+RUN_FULL_TRYLOCK_EVAL.md
+EVALUATION_STATUS.md
+LOCK_DOWN_DATASET.md
+DEPLOYMENT_SUMMARY.md
+GCP_VM_SETUP.md
+COLAB_STEP_BY_STEP.md
+ARXIV_QUICK_REFERENCE.txt
+TRYLOCK_v2_Specification.md
+*_Colab.ipynb
+
+# Paper internal docs
+paper/*_COMPLETE.md
+paper/*_PLAN.md
+paper/*_STATUS.md
+paper/QUICK_RESPONSE_*.md
+paper/*_Draft.md
+paper/*_Canonical.md
+paper/*_v2.zip
+
+# HuggingFace local data copies (use HuggingFace directly)
+huggingface/trylock-dataset/*.jsonl
+huggingface/*/tokenizer.json
+huggingface/*/tokenizer.model

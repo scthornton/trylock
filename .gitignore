@@ -127,3 +127,14 @@ paper/*_v2.zip
 huggingface/trylock-dataset/*.jsonl
 huggingface/*/tokenizer.json
 huggingface/*/tokenizer.model
+
+# AI tool artifacts (general patterns)
+.claude/
+CLAUDE.md
+claude.md
+planning.md
+status.md
+notes.md
+todo.md
+*.chat
+*.conversation
